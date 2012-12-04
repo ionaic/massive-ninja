@@ -90,9 +90,10 @@ void main(void) {
     vec2 inc = vec2(p.x&1,p.y&1)/vec2(m,m);
 	inc = 2*texture(tex,ex_UV).xy+inc;
 	inc = mod(inc,1);
-	
+    colorOut = vec4(inc,0,0);
+    return;
 	// jitter
-    float r = 0.1;
+    float r = 0.0;
 	vec2 n = vec2(snoise(gl_FragCoord.xy), snoise(600*vec2(1.,1.)/gl_FragCoord.xy));
     n = mod(n, 1);
     n *= 2;
