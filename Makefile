@@ -2,8 +2,8 @@ CC=g++
 GLINCL=-lglfw -lGL -lGLEW
 SRC=main.cpp
 
-all: SRC
+all:
 	$(CC) $(GLINCL) $(SRC)
 
-debug: SRC
+debug:
 	$(CC) -g $(GLINCL) $(SRC)

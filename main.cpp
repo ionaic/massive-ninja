@@ -91,7 +91,7 @@ GLuint compileShader(const char *fname, GLuint type) {
 	return shader;
 }
 
-GLuint initShaders() {
+GLuint initShaders(const char * vert, const char * frag) {
 	GLuint p, f, v;
 	// get the shader code
 	v = compileShader("minimal.vert",GL_VERTEX_SHADER);
@@ -149,7 +149,8 @@ int main( void ) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	initGeometry();
-	GLuint p = initShaders();
+	GLuint p = initShaders("minimal.vert", "minimal.frag");
+	GLuint q = initShaders("minimal.vert", "minimal.frag");
 	// Main loop
     GLuint pyramid[10];
     for (int i = 0, j=1; i<10; ++i, j*=2) {
@@ -178,6 +179,7 @@ int main( void ) {
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);
+	glUseProgram(q);
 	glUniform1i(tex, 9);
     int running = GL_TRUE;
 	while( running ) {
