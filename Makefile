@@ -1,9 +1,16 @@
 CC=g++
 GLINCL=-lglfw -lGL -lGLEW
 SRC=main.cpp
+DEST=main
 
-all:
-	$(CC) $(GLINCL) $(SRC)
+all: $(SRC)
+	$(CC) $(GLINCL) $(SRC) -o $(DEST)
 
-debug:
-	$(CC) -g $(GLINCL) $(SRC)
+clang:
+	clang++ $(GLINCL) $(SRC) -o $(DEST)
+
+debug: $(SRC)
+	$(CC) -g $(GLINCL) $(SRC) -o $(DEST)
+
+clean:
+	rm $(DEST)
