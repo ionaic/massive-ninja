@@ -92,7 +92,7 @@ shader, 1, (const GLchar**)&source,&length);
 	return shader;
 }
 
-GLuint initShaders(const char * vert, const char * frag, bool isrtt = false) {
+GLuint initShaders(const char * vert, const char * frag) {
 	GLuint p, f, v;
 	// get the shader code
 	v = compileShader(vert,GL_VERTEX_SHADER);
@@ -109,37 +109,6 @@ GLuint initShaders(const char * vert, const char * frag, bool isrtt = false) {
 	glAttachShader(p,f);
 	// link things together and activate the shader
 	glLinkProgram(p);
-	if (isrtt) {
-		glBindFragDataLocation(p,0,"out_Color");
-		GLenum error = glGetError();
-		switch (error) {
-			case GL_NO_ERROR:
-				break;
-			case GL_INVALID_VALUE:
-				cout << "GL_INVALID_VALUE" << endl;
-				break;
-			case GL_INVALID_OPERATION:
-				cout << "GL_INVALID_OPERATION" << endl;
-				break;
-			case GL_INVALID_ENUM:
-				cout << "GL_INVALID_ENUM" << endl;
-				break;
-			case GL_INVALID_FRAMEBUFFER_OPERATION:
-				cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << endl;
-				break;
-			case GL_OUT_OF_MEMORY:
-				cout << "GL_OUT_OF_MEMORY" << endl;
-				break;
-			case GL_STACK_UNDERFLOW:
-				cout << "GL_STACK_UNDERFLOW" << endl;
-				break;
-			case GL_STACK_OVERFLOW:
-				cout << "GL_STACK_OVERFLOW" << endl;
-				break;
-			default:
-				cout << "Unknown OpenGL Error: " << error << endl;
-		};
-	}
 	return p;
 }
 
@@ -163,7 +132,7 @@ GLuint createBlankTex(GLuint size) {
 }
 
 GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
-	GLuint p = initShaders("minimal.vert", "minimal.frag",true);
+	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	for (GLuint i = 0; i<10; ++i) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, pyramid[i]);
@@ -186,6 +155,19 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 		cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << endl;
 		GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0};
 		glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+		glBindFragDataLocation(p,0,"colorOut");
+		GLenum error = glGetError();
+		switch (error) {
+			case GL_NO_ERROR: break;
+			case GL_INVALID_VALUE: cout << "GL_INVALID_VALUE" << endl; break;
+			case GL_INVALID_OPERATION: cout << "GL_INVALID_OPERATION" << endl; break;
+			case GL_INVALID_ENUM: cout << "GL_INVALID_ENUM" << endl; break;
+			case GL_INVALID_FRAMEBUFFER_OPERATION: cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << endl; break;
+			case GL_OUT_OF_MEMORY: cout << "GL_OUT_OF_MEMORY" << endl; break;
+			case GL_STACK_UNDERFLOW: cout << "GL_STACK_UNDERFLOW" << endl; break;
+			case GL_STACK_OVERFLOW: cout << "GL_STACK_OVERFLOW" << endl; break;
+			default: cout << "Unknown OpenGL Error: " << error << endl;
+		};
 		/*
 		GLuint depthrenderbuffer;
 		glGenRenderbuffers(1, &depthrenderbuffer);
