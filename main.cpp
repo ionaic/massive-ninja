@@ -150,7 +150,7 @@ int main( void ) {
 	glDepthFunc(GL_LEQUAL);
 	initGeometry();
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
-	GLuint q = initShaders("minimal.vert", "minimal.frag");
+	GLuint q = initShaders("minimal.vert", "tex.frag");
 	// Main loop
     GLuint pyramid[10];
     for (int i = 0, j=1; i<10; ++i, j*=2) {
