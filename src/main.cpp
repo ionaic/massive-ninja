@@ -236,7 +236,8 @@ int main( void ) {
 	glDepthFunc(GL_LEQUAL);
 	initGeometry();
 	GLuint q = initShaders("minimal.vert", "tex.frag");
-	// Main loop
+	cout << GL_MAX_TEXTURE_UNITS << endl;
+    // Main loop
     GLuint pyramid[10];
     for (int i = 0, j=1; i<10; ++i, j*=2) {
         pyramid[i] = createBlankTex(j);
@@ -248,7 +249,12 @@ int main( void ) {
 	int hasrun = GL_FALSE;
     int firstrun = GL_TRUE;
 	GLint tex = glGetUniformLocation(q, "tex");
-	glUniform1i(tex, 9);
+	GLint exemplar = glGetUniformLocation(q,"exemplar");
+    glUniform1i(tex, 9);
+    glActiveTexture(GL_TEXTURE0);
+    GLint example = glfwLoadTexture2D("rice.tga",0);
+    glBindTexture(GL_TEXTURE_2D, example);
+    glUniform1i(exemplar,0);
     while( running ) {
 	    if (glfwGetKey(GLFW_KEY_SPACE) || firstrun == GL_TRUE) {
             firstrun = GL_FALSE;
@@ -270,7 +276,7 @@ int main( void ) {
         if (glfwGetKey('7')) glUniform1i(tex,7);
         if (glfwGetKey('8')) glUniform1i(tex,8);
         if (glfwGetKey('9')) glUniform1i(tex,9);
-	    
+	    if (glfwGetKey('I')) glUniform1i(tex,10);
         // OpenGL rendering goes here...
 		glClear( GL_COLOR_BUFFER_BIT );
 		// draw the triangle
