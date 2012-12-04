@@ -168,21 +168,15 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 	cout << "GL_FRAMEBUFFER_COMPLETE: " << GL_FRAMEBUFFER_COMPLETE << endl;
 	for (GLuint i=1; i<10; ++i) {
 		GLuint FBO;
-		checkGlError(7);
 		glGenFramebuffers(1,&FBO);
-		checkGlError(6);
 		glBindFramebuffer(GL_FRAMEBUFFER,FBO);
-		checkGlError(5);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,pyramid[i],0);
-		checkGlError(4);
 		cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << endl;
 		
-		checkGlError(3);
 		GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0};
 		glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 		glUseProgram(p);
 		glBindFragDataLocation(p,0,"colorOut");
-		checkGlError(1);
 		
 		GLint m = glGetUniformLocation(p,"m");
 		glUniform1ui(m,size[i]);
@@ -205,7 +199,8 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 		glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 		cout << (glCheckFramebufferStatus(FBO[i])==GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) << endl;
 		*/
-		glUniform1i(tex, pyramid[i-1]);
+		tex = glGetUniformLocation(p, "tex");
+		glUniform1i(tex, i-1);
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
