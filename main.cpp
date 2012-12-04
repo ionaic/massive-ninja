@@ -69,7 +69,8 @@ GLuint compileShader(const char *fname, GLuint type) {
 	shader = glCreateShader(type);
 	// load the file into memory and try to compile it
 	char *source = loadFile(fname,length);
-	glShaderSource(shader, 1, (const GLchar**)&source,&length);
+	glShaderSource(
+shader, 1, (const GLchar**)&source,&length);
 	GLint compiled;
 	glCompileShader(shader);
 	// print out errors if they're there
@@ -91,23 +92,54 @@ GLuint compileShader(const char *fname, GLuint type) {
 	return shader;
 }
 
-GLuint initShaders(const char * vert, const char * frag) {
+GLuint initShaders(const char * vert, const char * frag, bool isrtt = false) {
 	GLuint p, f, v;
 	// get the shader code
 	v = compileShader(vert,GL_VERTEX_SHADER);
-	f = compileShader(frag,GL_FRAGMENT_SHADER);	
+	f = compileShader(frag,GL_FRAGMENT_SHADER);
 	// the GLSL program links shaders together to form the render pipeline
 	p = glCreateProgram();
 	// assign numerical IDs to the variables that we pass to the shaders 
 	glBindAttribLocation(p,0, "in_Position");
 	glBindAttribLocation(p,1, "in_Color");
-	glBindAttribLocation(p,2, "in_UV");
+	glBindAttribLocation(p,2, "in_UV");	
 	//glBindAttribLocation(p,3, "tex");
 	// bind our shaders to this program
 	glAttachShader(p,v);
 	glAttachShader(p,f);
 	// link things together and activate the shader
 	glLinkProgram(p);
+	if (isrtt) {
+		glBindFragDataLocation(p,0,"out_Color");
+		GLenum error = glGetError();
+		switch (error) {
+			case GL_NO_ERROR:
+				break;
+			case GL_INVALID_VALUE:
+				cout << "GL_INVALID_VALUE" << endl;
+				break;
+			case GL_INVALID_OPERATION:
+				cout << "GL_INVALID_OPERATION" << endl;
+				break;
+			case GL_INVALID_ENUM:
+				cout << "GL_INVALID_ENUM" << endl;
+				break;
+			case GL_INVALID_FRAMEBUFFER_OPERATION:
+				cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << endl;
+				break;
+			case GL_OUT_OF_MEMORY:
+				cout << "GL_OUT_OF_MEMORY" << endl;
+				break;
+			case GL_STACK_UNDERFLOW:
+				cout << "GL_STACK_UNDERFLOW" << endl;
+				break;
+			case GL_STACK_OVERFLOW:
+				cout << "GL_STACK_OVERFLOW" << endl;
+				break;
+			default:
+				cout << "Unknown OpenGL Error: " << error << endl;
+		};
+	}
 	return p;
 }
 
@@ -123,7 +155,7 @@ GLuint createBlankTex(GLuint size) {
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ); 
     void* data = calloc(size*size,sizeof(GLuint));
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB16,size,size,0,GL_RGB,GL_UNSIGNED_SHORT,data);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB16,size,size,0,GL_RGB,GL_UNSIGNED_SHORT,0);
     free(data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -131,7 +163,7 @@ GLuint createBlankTex(GLuint size) {
 }
 
 GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
-	GLuint p = initShaders("minimal.vert", "minimal.frag");
+	GLuint p = initShaders("minimal.vert", "minimal.frag",true);
 	for (GLuint i = 0; i<10; ++i) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, pyramid[i]);
@@ -142,16 +174,40 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
     glUniform1i(m,512);
 	glUseProgram(p);
 	
-	GLuint FBO[10];
-	glGenFramebuffers(10, FBO);
+	//GLuint FBO[10];
+	//glGenFramebuffers(10, FBO);
+	int size[10] = {1,2,4,8,16,32,64,128,256,512};
+	cout << "GL_FRAMEBUFFER_COMPLETE: " << GL_FRAMEBUFFER_COMPLETE << endl;
 	for (GLuint i=1; i<10; ++i) {
-		glUniform1i(tex, pyramid[i-1]);
-	    glBindFramebuffer(GL_FRAMEBUFFER,FBO[i]);
+		GLuint FBO;
+		glGenFramebuffers(1,&FBO);
+		glBindFramebuffer(GL_FRAMEBUFFER,FBO);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,pyramid[i],0);
+		cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << endl;
+		GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0};
+		glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+		/*
+		GLuint depthrenderbuffer;
+		glGenRenderbuffers(1, &depthrenderbuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, size[i], size[i]);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+		*/
+		/*
+		glBindFramebuffer(GL_FRAMEBUFFER,FBO[i]);
+		glViewport(0,0,size[i],size[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,pyramid[i],0);
+		GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0};
+		glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+		cout << (glCheckFramebufferStatus(FBO[i])==GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) << endl;
+		*/
+		glUniform1i(tex, pyramid[i-1]);
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 		glfwSwapBuffers();
+		
+		glDeleteFramebuffers(1,&FBO);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);
@@ -171,7 +227,7 @@ int main( void ) {
 	}
 	glfwSetWindowTitle("Triangle");
 	glfwSetWindowSizeCallback( windowResize );
-	glfwSwapInterval( 1 );
+	glfwSwapInterval( 1 ); 
 	windowResize(512,512);
 	glewInit();
 	glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
@@ -199,6 +255,7 @@ int main( void ) {
             if (hasrun == GL_FALSE) {
                 hasrun = GL_TRUE;
                 runAlgorithm(pyramid, q);
+				glViewport(0,0,512,512);
             }
         } else {
             hasrun = GL_FALSE;
