@@ -130,8 +130,33 @@ GLuint createBlankTex(GLuint size) {
     return texture;
 }
 
-GLuint runAlgorithm() {
+GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
+	for (GLuint i = 0; i<10; ++i) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, pyramid[i]);
+	}
+	GLint tex = glGetUniformLocation(p, "tex");
+	cout << tex << endl;
+    GLint m = glGetUniformLocation(p,"m");
+    glUniform1i(m,512);
+	glUseProgram(p);
+	
+	GLuint FBO[10];
+	glGenFramebuffers(10, FBO);
+	for (GLuint i=1; i<10; ++i) {
+		glUniform1i(tex, pyramid[i-1]);
+	    glBindFramebuffer(GL_FRAMEBUFFER,FBO[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,pyramid[i],0);
+		glClear( GL_COLOR_BUFFER_BIT );
+		glBindVertexArray(vertexArrayID);
+		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+		glfwSwapBuffers();
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+	glBindRenderbuffer(GL_RENDERBUFFER,0);
+	glUseProgram(q);
+    return p;
 }
 
 int main( void ) {
@@ -162,34 +187,34 @@ int main( void ) {
         cout << j << endl;
     }
 	cout << GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS << endl;
-	for (GLuint i = 0; i<10; ++i) {
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, pyramid[i]);
-	}
-	GLint tex = glGetUniformLocation(p, "tex");
-	cout << tex << endl;
-	glUseProgram(p);
-	
-	GLuint FBO;
-	glGenFramebuffers(1, &FBO);
-	glBindFramebuffer(GL_FRAMEBUFFER,FBO);
-	for (GLuint i=1; i<10; ++i) {
-		glUniform1i(tex, i-1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,pyramid[i],0);
-		glClear( GL_COLOR_BUFFER_BIT );
-		glBindVertexArray(vertexArrayID);
-		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-		glfwSwapBuffers();
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER,0);
-	glBindRenderbuffer(GL_RENDERBUFFER,0);
-	glUseProgram(q);
-	tex = glGetUniformLocation(q, "tex");
-	cout << tex << endl;
-	glUniform1i(tex, 9);
+    runAlgorithm(pyramid,q);
     int running = GL_TRUE;
-	while( running ) {
-		// OpenGL rendering goes here...
+	int hasrun = GL_FALSE;
+    int firstrun = GL_TRUE;
+	GLint tex = glGetUniformLocation(q, "tex");
+	glUniform1i(tex, 9);
+    while( running ) {
+	    if (glfwGetKey(GLFW_KEY_SPACE) || firstrun == GL_TRUE) {
+            firstrun = GL_FALSE;
+            if (hasrun == GL_FALSE) {
+                hasrun = GL_TRUE;
+                runAlgorithm(pyramid, q);
+            }
+        } else {
+            hasrun = GL_FALSE;
+        }
+        if (glfwGetKey('0')) glUniform1i(tex,0);
+        if (glfwGetKey('1')) glUniform1i(tex,1);
+        if (glfwGetKey('2')) glUniform1i(tex,2);
+        if (glfwGetKey('3')) glUniform1i(tex,3);
+        if (glfwGetKey('4')) glUniform1i(tex,4);
+        if (glfwGetKey('5')) glUniform1i(tex,5);
+        if (glfwGetKey('6')) glUniform1i(tex,6);
+        if (glfwGetKey('7')) glUniform1i(tex,7);
+        if (glfwGetKey('8')) glUniform1i(tex,8);
+        if (glfwGetKey('9')) glUniform1i(tex,9);
+	    
+        // OpenGL rendering goes here...
 		glClear( GL_COLOR_BUFFER_BIT );
 		// draw the triangle
 		glBindVertexArray(vertexArrayID);
