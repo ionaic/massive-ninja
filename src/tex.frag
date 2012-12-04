@@ -12,6 +12,6 @@ out vec4 out_Color;
 
 void main(void) {
     out_Color = texture(tex,ex_UV);
-	out_Color = texture(exemplar,texture(tex,ex_UV).xy);
+	//out_Color = texture(exemplar,texture(tex,ex_UV).xy);
 	//out_Color = vec4(ex_Color,1.0);
 }

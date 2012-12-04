@@ -246,7 +246,7 @@ int main( void ) {
 	cout << GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS << endl;
     runAlgorithm(pyramid,q);
     int running = GL_TRUE;
-	int hasrun = GL_FALSE;
+	int hasrun = GL_TRUE;
     int firstrun = GL_TRUE;
 	GLint tex = glGetUniformLocation(q, "tex");
 	GLint exemplar = glGetUniformLocation(q,"exemplar");
