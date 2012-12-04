@@ -94,8 +94,8 @@ GLuint compileShader(const char *fname, GLuint type) {
 GLuint initShaders(const char * vert, const char * frag) {
 	GLuint p, f, v;
 	// get the shader code
-	v = compileShader("minimal.vert",GL_VERTEX_SHADER);
-	f = compileShader("minimal.frag",GL_FRAGMENT_SHADER);	
+	v = compileShader(vert,GL_VERTEX_SHADER);
+	f = compileShader(frag,GL_FRAGMENT_SHADER);	
 	// the GLSL program links shaders together to form the render pipeline
 	p = glCreateProgram();
 	// assign numerical IDs to the variables that we pass to the shaders 
@@ -108,6 +108,7 @@ GLuint initShaders(const char * vert, const char * frag) {
 	glAttachShader(p,f);
 	// link things together and activate the shader
 	glLinkProgram(p);
+	return p;
 }
 
 // Callback for when the window is resized
@@ -180,6 +181,8 @@ int main( void ) {
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);
 	glUseProgram(q);
+	tex = glGetUniformLocation(q, "tex");
+	cout << tex << endl;
 	glUniform1i(tex, 9);
     int running = GL_TRUE;
 	while( running ) {
