@@ -130,6 +130,10 @@ GLuint createBlankTex(GLuint size) {
     return texture;
 }
 
+GLuint runAlgorithm() {
+	GLuint p = initShaders("minimal.vert", "minimal.frag");
+}
+
 int main( void ) {
 	// Initialize GLFW
 	if( !glfwInit() ) {
@@ -150,7 +154,6 @@ int main( void ) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	initGeometry();
-	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	GLuint q = initShaders("minimal.vert", "tex.frag");
 	// Main loop
     GLuint pyramid[10];
