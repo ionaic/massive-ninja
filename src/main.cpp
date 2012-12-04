@@ -179,7 +179,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 		glBindFragDataLocation(p,0,"colorOut");
 		
 		GLint m = glGetUniformLocation(p,"m");
-		glUniform1ui(m,128);
+		glUniform1ui(m,96);
 		
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
@@ -252,7 +252,7 @@ int main( void ) {
 	GLint exemplar = glGetUniformLocation(q,"exemplar");
     glUniform1i(tex, 9);
     glActiveTexture(GL_TEXTURE0);
-    GLint example = glfwLoadTexture2D("rice.tga",0);
+    GLint example = glfwLoadTexture2D("../sample/39-0.tga",0);
     glBindTexture(GL_TEXTURE_2D, example);
     glUniform1i(exemplar,0);
     while( running ) {
