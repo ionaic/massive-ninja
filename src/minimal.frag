@@ -113,5 +113,4 @@ void main(void) {
 	inc = mod(inc,1);
     
 	colorOut = vec4(inc,0,0);//texelFetch(tex,p0,0).xy + inc,0,0);
-
 }
