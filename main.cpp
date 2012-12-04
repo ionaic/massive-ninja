@@ -131,17 +131,36 @@ GLuint createBlankTex(GLuint size) {
     return texture;
 }
 
+void checkGlError(int l) {
+	GLenum error = glGetError();
+	if (error!=0) cout << "Location: " << l << endl;
+	switch (error) {
+		case GL_NO_ERROR: break;
+		case GL_INVALID_VALUE: cout << "GL_INVALID_VALUE" << endl; break;
+		case GL_INVALID_OPERATION: cout << "GL_INVALID_OPERATION" << endl; break;
+		case GL_INVALID_ENUM: cout << "GL_INVALID_ENUM" << endl; break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION: cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << endl; break;
+		case GL_OUT_OF_MEMORY: cout << "GL_OUT_OF_MEMORY" << endl; break;
+		case GL_STACK_UNDERFLOW: cout << "GL_STACK_UNDERFLOW" << endl; break;
+		case GL_STACK_OVERFLOW: cout << "GL_STACK_OVERFLOW" << endl; break;
+		default: cout << "Unknown OpenGL Error: " << error << endl;
+	};
+}
+
 GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
+		checkGlError(8);
 	for (GLuint i = 0; i<10; ++i) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, pyramid[i]);
 	}
 	GLint tex = glGetUniformLocation(p, "tex");
-	cout << tex << endl;
-    GLint m = glGetUniformLocation(p,"m");
-    glUniform1i(m,512);
 	glUseProgram(p);
+	cout << tex << endl;
+	GLint m = glGetUniformLocation(p,"m");
+	checkGlError(9);
+	glUniform1ui(m,512);
+	checkGlError(0);
 	
 	//GLuint FBO[10];
 	//glGenFramebuffers(10, FBO);
@@ -149,25 +168,28 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 	cout << "GL_FRAMEBUFFER_COMPLETE: " << GL_FRAMEBUFFER_COMPLETE << endl;
 	for (GLuint i=1; i<10; ++i) {
 		GLuint FBO;
+		checkGlError(7);
 		glGenFramebuffers(1,&FBO);
+		checkGlError(6);
 		glBindFramebuffer(GL_FRAMEBUFFER,FBO);
+		checkGlError(5);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,pyramid[i],0);
+		checkGlError(4);
 		cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << endl;
+		
+		checkGlError(3);
 		GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0};
 		glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+		glUseProgram(p);
 		glBindFragDataLocation(p,0,"colorOut");
-		GLenum error = glGetError();
-		switch (error) {
-			case GL_NO_ERROR: break;
-			case GL_INVALID_VALUE: cout << "GL_INVALID_VALUE" << endl; break;
-			case GL_INVALID_OPERATION: cout << "GL_INVALID_OPERATION" << endl; break;
-			case GL_INVALID_ENUM: cout << "GL_INVALID_ENUM" << endl; break;
-			case GL_INVALID_FRAMEBUFFER_OPERATION: cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << endl; break;
-			case GL_OUT_OF_MEMORY: cout << "GL_OUT_OF_MEMORY" << endl; break;
-			case GL_STACK_UNDERFLOW: cout << "GL_STACK_UNDERFLOW" << endl; break;
-			case GL_STACK_OVERFLOW: cout << "GL_STACK_OVERFLOW" << endl; break;
-			default: cout << "Unknown OpenGL Error: " << error << endl;
-		};
+		checkGlError(1);
+		
+		GLint m = glGetUniformLocation(p,"m");
+		glUniform1ui(m,size[i]);
+		
+		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
+		glViewport(0, 0, size[i], size[i]);
+		checkGlError(2);
 		/*
 		GLuint depthrenderbuffer;
 		glGenRenderbuffers(1, &depthrenderbuffer);
@@ -187,8 +209,9 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-		glfwSwapBuffers();
-		
+		//glfwSwapBuffers();
+		glPopAttrib();
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glDeleteFramebuffers(1,&FBO);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
