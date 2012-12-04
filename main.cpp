@@ -179,7 +179,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 		glBindFragDataLocation(p,0,"colorOut");
 		
 		GLint m = glGetUniformLocation(p,"m");
-		glUniform1ui(m,size[i]);
+		glUniform1ui(m,32);
 		
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
