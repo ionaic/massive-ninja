@@ -19,8 +19,8 @@ float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
     // check if center is far enough away from boundary if not, shift the 
     //  position of the pixel in the neighborhood so that the neighborhood
     //  fits into the boundaries of the image
-    ivec2 c_res = clamp(res_ij, shift, textureSize(res, 0) - k);
-    ivec2 c_ex = clamp(ex_ij, shift, textureSize(ex, 0) - k);
+    ivec2 c_res = clamp(res_ij, shift, textureSize(res, 0) - shift);
+    ivec2 c_ex = clamp(ex_ij, shift, textureSize(ex, 0) - shift);
     
     // calculate summed squared euclidean distance for each channel for each
     //  pixel in the neighborhood
@@ -47,7 +47,7 @@ void main(void) {
     ivec2 c_ex = clamp(ex_UV, 3, textureSize(ex, 0) - 3);
 
     // array to store the neighborhood
-    
+    ivec3 nbhd_set[9];
 
     // iterate over neighborhood and calculate the neighborhood distances
     for (int i = -1 * shift; i < shift; i++) {
