@@ -39,7 +39,9 @@ float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
 
 
 void main(void) {
-    //nbhd_dist(glFragCoord, ex_UV, 5);
+    ivec2 size = textureSize(res,0);
+    ivec2 my_pos = ivec2(vec2(size) * ex_UV);
+    nbhd_dist(ivec2(gl_FragCoord.xy), my_pos, 5);
     
     colorOut = texture(ex, ex_UV); // for now, just output the same texture coord
 }
