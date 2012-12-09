@@ -82,6 +82,8 @@ float snoise(vec2 v)
   return 130.0 * dot(m, g);
 }
 
+
+gt 
 void main(void) {
 	// upsampling
     float mstep = 1./float(m);

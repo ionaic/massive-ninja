@@ -45,7 +45,7 @@ char* loadFile(const char *fname, GLint &fSize) {
 	std::ifstream::pos_type size;
 	char * memblock;
 
-	// file read based on example in cplusplus.com tutorial
+	// file read based on example inhttp://bitsquid.se/presentations/flexible-rendering-multiple-platforms.pdf cplusplus.com tutorial
 	std::ifstream file (fname, std::ios::in|std::ios::binary|std::ios::ate);
 	if (file.is_open()) {
 		size = file.tellg();
@@ -246,7 +246,7 @@ int main( void ) {
 	cout << GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS << endl;
     runAlgorithm(pyramid,q);
     int running = GL_TRUE;
-	int hasrun = GL_TRUE;
+	int hasrun= GL_TRUE;
     int firstrun = GL_TRUE;
 	GLint tex = glGetUniformLocation(q, "tex");
 	GLint exemplar = glGetUniformLocation(q,"exemplar");
