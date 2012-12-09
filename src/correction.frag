@@ -20,15 +20,15 @@ float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
     // check if center is far enough away from boundary if not, shift the 
     //  position of the pixel in the neighborhood so that the neighborhood
     //  fits into the boundaries of the image
-    ivec2 c_res = clamp(res_ij, shift, textureSize(res, 0));
-    ivec2 c_ex = clamp(ex_ij, shift, textureSize(ex, 0));
+    ivec2 c_res = clamp(res_ij, ivec2(shift), textureSize(res, 0));
+    ivec2 c_ex = clamp(ex_ij, ivec2(shift), textureSize(ex, 0));
     
     // calculate summed squared euclidean distance for each channel for each
     //  pixel in the neighborhood
     vec4 dist = vec4(0.0f, 0.0f, 0.0f, 0.0f);
     for (int i = -1 * shift; i < shift; i++) {
         for (int j = -1 * shift; j < shift; j++) {
-            dist += pow(texture(ex, c_ex + vec2(i, j)) - texture(ex, texelFetch(res, c_res + vec2(i, j))), 2);
+            dist += pow(texture(ex, c_ex + ivec2(i, j)) - texture(ex, texelFetch(res, c_res + ivec2(i, j),0).xy), vec4(2));
         }
     }
  
@@ -39,7 +39,7 @@ float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
 
 
 void main(void) {
-    nbhd_dist(glFragCoord, ex_UV, 5);
+    //nbhd_dist(glFragCoord, ex_UV, 5);
     
     colorOut = texture(ex, ex_UV); // for now, just output the same texture coord
 }

@@ -157,16 +157,12 @@ GLuint createFBO(GLuint texture) {
     return FBO;
 }
 
-GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
+GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
-	GLuint r = initShaders("minimal.vert", "tex.frag");
-	GLint r_tex = glGetUniformLocation(q, "tex");
-	GLint r_exemplar = glGetUniformLocation(q,"exemplar");
-	GLint r_mode = glGetUniformLocation(q,"mode");
+	GLuint r = initShaders("minimal.vert", "correction.frag");
+	GLint r_tex = glGetUniformLocation(q, "res");
+	GLint r_exemplar = glGetUniformLocation(q,"ex");
 	
-    cout << r_tex << endl << r_exemplar << endl << r_mode << endl << endl;
-    glUseProgram(r);
-    glUniform1i(r_mode, 2);
 	checkGlError(8);
 	GLint tex = glGetUniformLocation(p, "tex");
 	glUseProgram(p);
@@ -187,7 +183,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, pyramid[i-1]);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, pyramid[i]);
+		glBindTexture(GL_TEXTURE_2D, exemplar);
 	
 		GLuint FBO = createFBO(ttex);
         glUseProgram(p);
@@ -215,9 +211,8 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
         glBindFragDataLocation(r,0,"out_color");
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
-        glUniform1i(r_exemplar,0);
+        glUniform1i(r_exemplar,1);
         glUniform1i(r_tex,0);
-        glUniform1i(r_mode, 2);
         
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
@@ -234,9 +229,8 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint q) {
         glBindFragDataLocation(r,0,"out_color");
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
-        glUniform1i(r_exemplar,0);
+        glUniform1i(r_exemplar,1);
         glUniform1i(r_tex,0);
-        glUniform1i(r_mode, 2);
         
         glClear(GL_COLOR_BUFFER_BIT);
         glBindVertexArray(vertexArrayID);
@@ -280,7 +274,8 @@ int main( void ) {
         pyramid[i] = createBlankTex(j);
 		cout << pyramid[i] << endl;
     }
-	GLuint example = pyramid[9]+1;
+	GLuint example;
+    glGenTextures(1,&example);
 	cout << example << endl;
 	GLFWimage imbuf;
 	glfwReadImage("rice.tga",&imbuf,0);
@@ -294,7 +289,7 @@ int main( void ) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	checkGlError(99);
 	//cout << example << endl;
-    runAlgorithm(pyramid,q);
+    runAlgorithm(pyramid,example,q);
     int running = GL_TRUE;
 	int hasrun= GL_TRUE;
     int firstrun = GL_TRUE;
@@ -315,7 +310,7 @@ int main( void ) {
             firstrun = GL_FALSE;
             if (hasrun == GL_FALSE) {
                 hasrun = GL_TRUE;
-                runAlgorithm(pyramid, q);
+                runAlgorithm(pyramid,example, q);
 				glViewport(0,0,512,512);
             }
         } else {
