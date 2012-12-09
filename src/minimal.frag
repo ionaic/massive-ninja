@@ -4,10 +4,9 @@
 
 precision highp float; // needed only for version 1.30
 
-uniform sampler2D tex; // texture 
-uniform uint m; // image size
-in  vec3 ex_Color; // exemplar color
-in  vec2 ex_UV; // exemplar uv
+uniform sampler2D tex; // previous level of the texture pyramid 
+uniform uint m; // exemplar image size
+in  vec2 ex_UV; // texture coordinate in tex. comes in at 2x res of tex
 in vec4 gl_FragCoord; // coordinate of current fragment on screen (in output texture in this case)
 out vec4 colorOut; // output color for this pixel
 
