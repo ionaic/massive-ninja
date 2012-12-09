@@ -83,7 +83,7 @@ float snoise(vec2 v)
 }
 
 
-gt 
+ 
 void main(void) {
 	// upsampling
     float mstep = 1./float(m);
