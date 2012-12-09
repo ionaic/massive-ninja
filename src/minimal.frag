@@ -4,14 +4,15 @@
 
 precision highp float; // needed only for version 1.30
 
-uniform sampler2D tex;
-uniform uint m;
-in  vec3 ex_Color;
-in  vec2 ex_UV;
-in vec4 gl_FragCoord;
-out vec4 colorOut;
+uniform sampler2D tex; // texture 
+uniform uint m; // image size
+in  vec3 ex_Color; // exemplar color
+in  vec2 ex_UV; // exemplar uv
+in vec4 gl_FragCoord; // coordinate of current fragment on screen (in output texture in this case)
+out vec4 colorOut; // output color for this pixel
 
-//
+// *****************************************************************************
+// NOISE FUNCTIONS
 // Description : Array and textureless GLSL 2D simplex noise function.
 //      Author : Ian McEwan, Ashima Arts.
 //  Maintainer : ijm
@@ -33,8 +34,7 @@ vec3 permute(vec3 x) {
   return mod289(((x*34.0)+1.0)*x);
 }
 
-float snoise(vec2 v)
-  {
+float snoise(vec2 v) {
   const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
                       0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
                      -0.577350269189626,  // -1.0 + 2.0 * C.x
@@ -81,8 +81,7 @@ float snoise(vec2 v)
   g.yz = a0.yz * x12.xz + h.yz * x12.yw;
   return 130.0 * dot(m, g);
 }
-
-
+// *****************************************************************************
  
 void main(void) {
 	// upsampling
