@@ -19,4 +19,32 @@
       Jitter is accomplished through the use of a simplex noise implementation. We modify the destination locations in each level of the image pyramid with deterministcally calculated pseudo-random noise, with each pixel of the result storing the pixel coordinates of a texel in the exemplar.  We choose a direction to shift the pixel, either $+1$ or $-1$ based on a randomness threshold ratio $r$ individually for the x and y directions.  In order to have higher values of $r$ correspond to more randomness, the comparison is made between the generated noise value $\vec{n} \in \mathbb{R}^2$ and $\left(1 - r \right)$ where $n_i > (1-r)$ corresponds to a $+1$ and $n_i < -(1-r)$ corresponds to $-1$, with any other value resulting in no movement.  The position of the pixel-coordinate texel is then moved accordingly.  Throughout upsampling and jitter, we only work with pixel coordinates, not the actual values of the exemplar.
 
     \section{Results}
+        \begin{figure}[H]
+            \centering
+            %\begin{subfigure}[h]
+            %    \centering
+            %    %\includegraphics{result3.png}
+            %    \caption{}
+            %    \label{fig:grad}
+            %\end{subfigure}
+            \begin{subfigure}
+                \centering
+                \includegraphics[width=3in]{result0.png}
+                \caption{}
+                \label{fig:visual}
+            \end{subfigure}
+            \begin{subfigure}
+                \centering
+                \includegraphics[width=3in]{result1.png}
+                \caption{}
+                \label{fig:stoch}
+            \end{subfigure}
+            \begin{subfigure}
+                \centering
+                \includegraphics[width=3in]{result2.png}
+                \caption{}
+                \label{fig:toroid}
+            \end{subfigure}
+            \caption{In (\ref{fig:visual}) we show a visualization of our upscaling and jitter on a gradient, seen in} %\ref{fig:grad}
+        \end{figure}
 \end{document}
