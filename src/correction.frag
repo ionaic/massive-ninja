@@ -6,6 +6,7 @@ precision highp float; // needed only for version 1.30
 
 uniform sampler2D ex; // example texture
 uniform sampler2D res; // synthesized texture
+uniform sampler2D coords;
 in vec4 gl_FragCoord; // coordinate of current fragment on screen
 //in int nbhd_size; // neighborhood size 
 in vec2 ex_UV; // corresponding coordinate of current pixel in example texture
@@ -36,12 +37,28 @@ float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
     return dist.r + dist.g + dist.b + dist.a;
 }
 
-
+ivec2 unpackCoord(float coord) {
+    int icoord = floatBitsToInt(coord);
+    return ivec2(icoord/65536, (icoord*65536)/65536);
+}
 
 void main(void) {
     ivec2 size = textureSize(res,0);
     ivec2 my_pos = ivec2(vec2(size) * ex_UV);
-    nbhd_dist(ivec2(gl_FragCoord.xy), my_pos, 5);
+    vec4 texcoord = texture(coords,ex_UV);
+    ivec2 coord = unpackCoord(texcoord.x);
+    float dist1 = nbhd_dist(ivec2(gl_FragCoord.xy), coord, 5);
+    coord = unpackCoord(texcoord.y);
+    float dist2 = nbhd_dist(ivec2(gl_FragCoord.xy), coord, 5);
+    coord = unpackCoord(texcoord.z);
+    float dist3 = nbhd_dist(ivec2(gl_FragCoord.xy), coord, 5);
+    coord = unpackCoord(texcoord.w);
+    float dist4 = nbhd_dist(ivec2(gl_FragCoord.xy), coord, 5);
+
+    float dist = min(dist1,min(dist2,min(dist3,dist4)));
+    coord = unpackCoord(texcoord.x*float(dist==dist1) + texcoord.y*float(dist==dist2) + texcoord.z*float(dist==dist3) + texcoord.w*float(coord==dist3));
     
-    colorOut = texture(ex, ex_UV); // for now, just output the same texture coord
+    vec2 newCoord = vec2(coord) / vec2(textureSize(res,0));
+     
+    colorOut = vec4(newCoord,0,0);//texture(ex, ex_UV); // for now, just output the same texture coord
 }
