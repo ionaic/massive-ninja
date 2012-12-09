@@ -44,16 +44,29 @@ void main(void) {
     //  if it is out of bounds, shift where the pixel is within the 
     //  neighborhood so that it fits properly
     ivec2 c_res = clamp(gl_FragCoord, 3, textureSize(res, 0) - 3);
-    ivec2 c_ex = clamp(ex_UV, 3, textureSize(ex, 0) - 3);
+    ivec2 c_ex = clamp(ivec2(ex_UV * textureSize(ex, 0)), 3, textureSize(ex, 0) - 3);
 
     // array to store the neighborhood
-    ivec3 nbhd_set[9];
-
+    ivec2 nbhd_set[9];
+    
     // iterate over neighborhood and calculate the neighborhood distances
     for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
+            nbhd_set[((i+1) * 3) + (j+1)] = nbhd_dist(c_res + vec2(i, j), c_ex + vec2(i, j), 5);
+        }
+    }
+    
+    ivec3 min_four[4];
+    min_four[0] = ivec3(0, 0, 0);
+    for (int i = 0; i < 9; i++) {
+        min_four[0] = 
+    }
+    // find the top k (4) values
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
             
         }
     }
-
+    
+    // pack each pair into a float
 }
