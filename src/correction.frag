@@ -61,4 +61,5 @@ void main(void) {
     vec2 newCoord = vec2(coord) / vec2(textureSize(res,0));
      
     colorOut = vec4(newCoord,0,0);//texture(ex, ex_UV); // for now, just output the same texture coord
+    colorOut = texture(ex,ex_UV);
 }
