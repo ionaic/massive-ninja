@@ -6,10 +6,11 @@ precision highp float; // needed only for version 1.30
 
 uniform sampler2D example_texture; // example texture
 uniform sampler2D res; // synthesized texture
-in vec2 uv_coord // uv coordinate
+in vec2 uv_coord; // uv coordinate
 #define k_val 4 // the number of values to return in the set
 
-out vec4 kcoh_set; // output values, (x,y) coords packed into floats
+out vec4 kcoh_set_x; // output x values
+out vec4 kcoh_set_y; // output y values
 
 // calculate squared neighborhood distance for neighborhood of size k
 float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
@@ -18,8 +19,8 @@ float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
     // check if center is far enough away from boundary if not, shift the 
     //  position of the pixel in the neighborhood so that the neighborhood
     //  fits into the boundaries of the image
-    ivec2 c_res = clamp(res_ij, shift, textureSize(res, 0) - shift);
-    ivec2 c_ex = clamp(ex_ij, shift, textureSize(example_texture, 0) - shift);
+    ivec2 c_res = clamp(res_ij, ivec2(shift), textureSize(res, 0) - ivec2(shift));
+    ivec2 c_ex = clamp(ex_ij, ivec2(shift), textureSize(example_texture, 0) - ivec2(shift));
     
     // calculate summed squared euclidean distance for each channel for each
     //  pixel in the neighborhood
@@ -38,8 +39,8 @@ void main(void) {
     // reposition the neighborhood so that it fits within bounds.
     //  if it is out of bounds, shift where the pixel is within the 
     //  neighborhood so that it fits properly
-    ivec2 c_res = clamp(gl_FragCoord, 3, textureSize(res, 0) - 3);
-    ivec2 c_ex = clamp(ivec2(uv_coord * textureSize(example_texture, 0)), 3, textureSize(example_texture, 0) - 3);
+    ivec2 c_res = clamp(ivec2(uv_coord * textureSize(res, 0)), ivec2(3), textureSize(res, 0) - 3);
+    ivec2 c_ex = clamp(ivec2(uv_coord * textureSize(example_texture, 0)), ivec2(3), textureSize(example_texture, 0) - 3);
 
     // array to store the neighborhood
     ivec3 nbhd_set[9];
@@ -47,7 +48,7 @@ void main(void) {
     // iterate over neighborhood and calculate the neighborhood distances
     for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
-            nbhd_set[((i+1) * 3) + (j+1)] = nbhd_dist(c_res + vec2(i, j), c_ex + vec2(i, j), 5);
+            nbhd_set[((i+1) * 3) + (j+1)] = ivec3(ivec2(c_res + ivec2(i, j)), nbhd_dist(c_res + ivec2(i, j), c_ex + ivec2(i, j), 5));
         }
     }
     
@@ -66,15 +67,23 @@ void main(void) {
             swap_val = ivec3(nbhd_set[j] * int(nbhd_set[j].z == min_val)) + ivec3(nbhd_set[i] * int(nbhd_set[j].z != min_val));
             
             // move the current value at nbhd_set[i] to j if it needs to be moved
-            nbhd_set[j] = ivec3(nbhd_set[i] * int(nbhd_set[i].z != swap_val.z)) + ivec3(nbhd_set[j] * int(nbhd_set[i].z == swap_val.z))
+            nbhd_set[j] = ivec3(nbhd_set[i] * int(nbhd_set[i].z != swap_val.z)) + ivec3(nbhd_set[j] * int(nbhd_set[i].z == swap_val.z));
             
             // value at nbhd_set[i] is now swap
             nbhd_set[i] = swap_val;
         }
     }
     
-    // pack each pair into a float
+    //// pack each pair into a float
+    //for (int i = 0; i < 4; i++) {
+    //    kcoh_set[i] = (nbhd_set[i].x * 65536) + nbhd_set[i].y;
+    //}
+
     for (int i = 0; i < 4; i++) {
-        kcoh_set[i] = (nbhd_set[i].x * 65536) + nbhd_set[i].y;
+        kcoh_set_x[i] = (nbhd_set[i].x / textureSize(res, 0).x);
+        kcoh_set_y[i] = (nbhd_set[i].y / textureSize(res, 0).y);
     }
+
+    kcoh_set_x = texture(res, uv_coord);
+    kcoh_set_y = texture(res, uv_coord);
 }

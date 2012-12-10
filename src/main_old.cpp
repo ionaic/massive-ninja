@@ -160,9 +160,20 @@ GLuint createFBO(GLuint texture) {
 GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	GLuint r = initShaders("minimal.vert", "correction.frag");
-	GLint r_tex = glGetUniformLocation(q, "res");
-	GLint r_exemplar = glGetUniformLocation(q,"ex");
-	
+	GLint r_exemplar = glGetUniformLocation(r,"example_texture");
+	GLint r_tex = glGetUniformLocation(r, "res");
+	GLint r_coords_x = glGetUniformLocation(r,"coords_x");
+	GLint r_coords_y = glGetUniformLocation(r,"coords_y");
+	cout << r_tex << ": " << r_exemplar << endl;
+	cout << r_coords_x << ": " << r_coords_y << endl;
+	for (int i = 0; i<7; ++i){
+		char buffer[4096], name[128];
+		GLsizei length, size;
+		GLenum type;
+		glGetActiveUniform(r,i,4096,&length,&size,&type,name);
+		cout << endl << name << endl << "size: " << size << endl;
+		cout << "type: " << type << endl << buffer << endl;
+	}
 	checkGlError(8);
 	GLint tex = glGetUniformLocation(p, "tex");
 	glUseProgram(p);
@@ -276,6 +287,7 @@ int main( void ) {
     }
 	GLuint example;
     glGenTextures(1,&example);
+	checkGlError(98);
 	cout << example << endl;
 	GLFWimage imbuf;
 	glfwReadImage("rice.tga",&imbuf,0);
