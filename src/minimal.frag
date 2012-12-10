@@ -88,7 +88,7 @@ void main(void) {
 	ivec2 p = ivec2(gl_FragCoord.xy);
 	ivec2 p0 = p/2;
     vec2 inc = vec2(p.x&1,p.y&1)/vec2(m,m);
-	inc = 2*texture(tex,ex_UV).xy+inc;
+	inc = 2*texture(tex,uv_coord).xy+inc;
 	inc = mod(inc,1);
     colorOut = vec4(inc,0,0);
     return;
