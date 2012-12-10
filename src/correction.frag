@@ -41,6 +41,8 @@ ivec2 unpackCoord(float coord) {
 }
 
 void main(void) {
+    colorOut = vec4(texture(coords_x,uv_coord).x, texture(coords_y,uv_coord).x, 0, 0);
+    return;
     //nbhd_dist(glFragCoord, ivec2(uv_coord * textureSize(example_texture, 0)), 5);
     ivec2 size = textureSize(res,0);
     ivec2 my_pos = ivec2(vec2(size) * uv_coord);
@@ -63,6 +65,7 @@ void main(void) {
     //vec2 newCoord = vec2(coord) / vec2(textureSize(res,0));
      
     colorOut = vec4(newCoord,0,0);
-    colorOut = texture(coords_y, uv_coord);
+    //colorOut = texture(res,uv_coord);
+    //colorOut = texture(coords_y, uv_coord);
     //colorOut = texture(coords, uv_coord); // for now, just output the same texture coord
 }

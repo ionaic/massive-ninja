@@ -8,47 +8,67 @@ uniform sampler2D example_texture; // example texture
 uniform sampler2D res; // synthesized texture
 in vec2 uv_coord; // uv coordinate
 #define k_val 4 // the number of values to return in the set
+#define nbhd 5
 
 out vec4 kcoh_set_x; // output x values
 out vec4 kcoh_set_y; // output y values
 
 // calculate squared neighborhood distance for neighborhood of size k
-float nbhd_dist(ivec2 res_ij, ivec2 ex_ij, int k) {
+float nbhd_dist(ivec2 ex_ij, ivec2 cur_ij, int k) {
+    // calculate the shift
     int shift = int(k * 0.5);
 
     // check if center is far enough away from boundary if not, shift the 
     //  position of the pixel in the neighborhood so that the neighborhood
     //  fits into the boundaries of the image
-    ivec2 c_res = clamp(res_ij, ivec2(shift), textureSize(res, 0) - ivec2(shift));
-    ivec2 c_ex = clamp(ex_ij, ivec2(shift), textureSize(example_texture, 0) - ivec2(shift));
+    //ivec2 c_ex = clamp(ex_ij, ivec2(shift), textureSize(example_texture, 0) - ivec2(shift));
+    //ivec2 c_cur = clamp(cur_ij, ivec2(shift), textureSize(res, 0) - ivec2(shift));
     
+    //ivec4 cur_coord = ivec4(max(cur_ij - ivec2(shift), ivec2(0)), min(cur_ij + ivec2(shift), texturesize(res,0)));
+    //ivec4 ex_coord = ivec4(max(ex_ij - ivec2(shift), ivec2(0)), min(ex_ij + ivec2(shift), texturesize(example_texture,0)));
+    ivec2 s_min = min(min(ex_ij-ivec2(shift),0),min(cur_ij-ivec2(shift),0));
+    ivec2 s_max = ivec2(-1) * min(min(textureSize(example_texture,0)-ex_ij-ivec2(shift),0),min(textureSize(res,0)-cur_ij-ivec2(shift),0));
+
     // calculate summed squared euclidean distance for each channel for each
-    //  pixel in the neighborhood
-    vec4 dist = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-    for (int i = -1 * shift; i <= shift; i++) {
-        for (int j = -1 * shift; j <= shift; j++) {
-            dist += pow(texture(example_texture, c_ex + ivec2(i, j)) - texture(example_texture, texelFetch(res, c_res + ivec2(i, j),0).xy), vec4(2));
+    //  pixel in the neighborhood; k is assumed to be odd
+    vec4 dist = vec4(0.0f);
+    vec4 cur_val;
+    vec4 ex_val;
+    for (int i = s_min.y; i <= s_max.y; i++) {
+        for (int j = s_min.x; j <= s_max.x; j++) {
+            ex_val = texelFetch(example_texture, ex_ij+ivec2(i,j), 0);
+            cur_val = texelFetch(res, cur_ij+ivec2(i,j), 0);
+            cur_val = texture(example_texture, cur_val.xy);
+            dist += pow(cur_val - ex_val, vec4(2));
         }
     }
- 
+    dist /= vec4((s_max.x-s_min.x)*(s_max.y-s_min.y)); 
     // return summed channels for the neighborhood
     return dist.r + dist.g + dist.b + dist.a;
 }
 
 void main(void) {
+    int shift = int(0.5 * nbhd);
     // reposition the neighborhood so that it fits within bounds.
     //  if it is out of bounds, shift where the pixel is within the 
     //  neighborhood so that it fits properly
-    ivec2 c_res = clamp(ivec2(uv_coord * textureSize(res, 0)), ivec2(3), textureSize(res, 0) - 3);
-    ivec2 c_ex = clamp(ivec2(uv_coord * textureSize(example_texture, 0)), ivec2(3), textureSize(example_texture, 0) - 3);
+    //ivec2 c_cur = clamp(ivec2(uv_coord * textureSize(res, 0)), ivec2(shift), textureSize(res, 0) - shift);
+    ivec2 c_cur = ivec2(uv_coord * textureSize(res, 0));
+    ivec2 c_ex = c_cur;
 
     // array to store the neighborhood
-    ivec3 nbhd_set[9];
-    
+    ivec3 nbhd_set[nbhd * nbhd];
+    int index = 0;
+
     // iterate over neighborhood and calculate the neighborhood distances
-    for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-            nbhd_set[((i+1) * 3) + (j+1)] = ivec3(ivec2(c_res + ivec2(i, j)), nbhd_dist(c_res + ivec2(i, j), c_ex + ivec2(i, j), 5));
+    ivec2 lc;
+    ivec2 begin = max(c_ex - ivec2(shift),ivec2(0));
+    ivec2 end = min(c_ex + ivec2(shift),textureSize(res,0));
+    for (int i = begin.x; i<=end.x; i++) {
+        for (int j = begin.y; j<=end.y; j++) {
+            lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * textureSize(example_texture, 0));
+            nbhd_set[index] = ivec3(lc, nbhd_dist(lc, c_cur, 5));
+            index++;
         }
     }
     
@@ -59,7 +79,7 @@ void main(void) {
     // find the top k (4) values
     for (int i = 0; i < 4; i++) {
         // for each cell, loop over all to find the next minimum val
-        for (int j = i; j < 9; j++) {
+        for (int j = i; j < index; j++) {
             // find the min val
             min_val = min(min_val, nbhd_set[j].z);
 
@@ -73,17 +93,12 @@ void main(void) {
             nbhd_set[i] = swap_val;
         }
     }
-    
-    //// pack each pair into a float
-    //for (int i = 0; i < 4; i++) {
-    //    kcoh_set[i] = (nbhd_set[i].x * 65536) + nbhd_set[i].y;
-    //}
 
     for (int i = 0; i < 4; i++) {
-        kcoh_set_x[i] = (nbhd_set[i].x / textureSize(res, 0).x);
-        kcoh_set_y[i] = (nbhd_set[i].y / textureSize(res, 0).y);
+        kcoh_set_x[i] = nbhd_set[i].x;
+        kcoh_set_y[i] = nbhd_set[i].y;
     }
 
-    kcoh_set_x = texture(res, uv_coord);
-    kcoh_set_y = texture(res, uv_coord);
+    kcoh_set_x /= vec4(textureSize(res, 0).x);
+    kcoh_set_y /= vec4(textureSize(res, 0).y);
 }

@@ -166,14 +166,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	GLint r_coords_y = glGetUniformLocation(r,"coords_y");
 	cout << r_tex << ": " << r_exemplar << endl;
 	cout << r_coords_x << ": " << r_coords_y << endl;
-	for (int i = 0; i<7; ++i){
-		char buffer[4096], name[128];
-		GLsizei length, size;
-		GLenum type;
-		glGetActiveUniform(r,i,4096,&length,&size,&type,name);
-		cout << endl << name << endl << "size: " << size << endl;
-		cout << "type: " << type << endl << buffer << endl;
-	}
+
 	checkGlError(8);
 	GLint tex = glGetUniformLocation(p, "tex");
 	glUseProgram(p);
@@ -217,13 +210,15 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,ttex);
-        FBO = createFBO(ttex2);
+        FBO = createFBO(pyramid[i]);
         glUseProgram(r);
         glBindFragDataLocation(r,0,"out_color");
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
         glUniform1i(r_exemplar,1);
         glUniform1i(r_tex,0);
+        glUniform1i(r_coords_x,1);
+        glUniform1i(r_coords_y,1);
         
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
@@ -232,7 +227,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
         glDeleteFramebuffers(1,&FBO);
 		checkGlError(2);
         glPopAttrib();
-
+		/*
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,ttex2);
         FBO = createFBO(pyramid[i]);
@@ -249,7 +244,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
         glBindFramebuffer(GL_FRAMEBUFFER,0);
         glDeleteFramebuffers(1,&FBO);
 		checkGlError(2);
-        glPopAttrib();
+        glPopAttrib();*/
     }
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);
@@ -277,6 +272,7 @@ int main( void ) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	initGeometry();
+	glEnable( GL_TEXTURE_2D );
 	GLuint q = initShaders("minimal.vert", "tex.frag");
     // Main loop
 	glActiveTexture(GL_TEXTURE0);
