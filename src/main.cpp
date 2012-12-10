@@ -69,8 +69,7 @@ GLuint compileShader(const char *fname, GLuint type) {
 	shader = glCreateShader(type);
 	// load the file into memory and try to compile it
 	char *source = loadFile(fname,length);
-	glShaderSource(
-shader, 1, (const GLchar**)&source,&length);
+	glShaderSource( shader, 1, (const GLchar**)&source,&length);
 	GLint compiled;
 	glCompileShader(shader);
 	// print out errors if they're there
@@ -152,16 +151,35 @@ GLuint createFBO(GLuint texture) {
     glGenFramebuffers(1,&FBO);
     glBindFramebuffer(GL_FRAMEBUFFER,FBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-    GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0};
+    static GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1,DrawBuffers);
+    return FBO;
+}
+
+GLuint createFBO(GLuint texture, GLuint texture2) {
+    GLuint FBO;
+    glGenFramebuffers(1,&FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER,FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, texture2, 0);
+    GLenum *DrawBuffers = new GLenum[2];
+    DrawBuffers[0] = GL_COLOR_ATTACHMENT0;
+    DrawBuffers[1] = GL_COLOR_ATTACHMENT1;
+    glDrawBuffers(2,DrawBuffers);
+    cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << endl;
     return FBO;
 }
 
 GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	GLuint r = initShaders("minimal.vert", "correction.frag");
-	GLint r_tex = glGetUniformLocation(q, "res");
-	GLint r_exemplar = glGetUniformLocation(q,"ex");
+	GLuint k = initShaders("minimal.vert", "test.frag");
+    GLint r_tex = glGetUniformLocation(r, "res");
+	GLint r_exemplar = glGetUniformLocation(r,"example_texture");
+    GLint r_coords_x = glGetUniformLocation(r,"coords_x");
+    GLint r_coords_y = glGetUniformLocation(r,"coords_y");
+    GLint k_tex = glGetUniformLocation(k,"res");
+    GLint k_exemplar = glGetUniformLocation(k,"example_texture");
 	
 	checkGlError(8);
 	GLint tex = glGetUniformLocation(p, "tex");
@@ -175,17 +193,18 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	//GLuint FBO[10];
 	//glGenFramebuffers(10, FBO);
 	int size[10] = {1,2,4,8,16,32,64,128,256,512};
-	//cout << "GL_FRAMEBUFFER_COMPLETE: " << GL_FRAMEBUFFER_COMPLETE << endl;
+	cout << "GL_FRAMEBUFFER_COMPLETE: " << GL_FRAMEBUFFER_COMPLETE << endl;
 	for (GLuint i=1; i<10; ++i) {
         GLuint ttex = createBlankTex(size[i]);	
         GLuint ttex2 = createBlankTex(size[i]);
+        GLuint ttex3 = createBlankTex(size[i]);
 		// bind textures
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, pyramid[i-1]);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, exemplar);
 	
-		GLuint FBO = createFBO(ttex);
+		GLuint FBO = createFBO(pyramid[i]);
         glUseProgram(p);
 		glBindFragDataLocation(p,0,"colorOut");
 		GLint m = glGetUniformLocation(p,"m");
@@ -203,16 +222,20 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glDeleteFramebuffers(1,&FBO);
         glPopAttrib();
-	
+        continue;
+        // shader pass 2	
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,ttex);
-        FBO = createFBO(ttex2);
-        glUseProgram(r);
-        glBindFragDataLocation(r,0,"out_color");
+        FBO = createFBO(pyramid[i]);
+        glUseProgram(k);
+        glBindFragDataLocation(k,0,"kcoh_set_x");
+        cout << "X: " << glGetFragDataLocation(k,"kcoh_set_x") << endl;
+        //glBindFragDataLocation(k,1,"kcoh_set_y");
+        //cout << "Y: " << glGetFragDataLocation(k,"kcoh_set_y") << endl;
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
-        glUniform1i(r_exemplar,1);
-        glUniform1i(r_tex,0);
+        glUniform1i(k_exemplar,1);
+        glUniform1i(k_tex,0);
         
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
@@ -221,17 +244,21 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
         glDeleteFramebuffers(1,&FBO);
 		checkGlError(2);
         glPopAttrib();
-
-        glActiveTexture(GL_TEXTURE0);
+        continue;
+        // shader pass 3
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D,ttex2);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D,ttex3);
         FBO = createFBO(pyramid[i]);
         glUseProgram(r);
-        glBindFragDataLocation(r,0,"out_color");
+        glBindFragDataLocation(r,0,"colorOut");
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
         glUniform1i(r_exemplar,1);
         glUniform1i(r_tex,0);
-        
+        glUniform1i(r_coords_x,2);
+        glUniform1i(r_coords_y,3);
         glClear(GL_COLOR_BUFFER_BIT);
         glBindVertexArray(vertexArrayID);
         glDrawArrays(GL_TRIANGLE_STRIP,0,4);
