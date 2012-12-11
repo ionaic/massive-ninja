@@ -25,12 +25,27 @@ void keepSmallest(vec3 new_val) {
 
     // find the maximum value in the current set
     test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, nbhd_set[3].z)));
-    //find = ivec4(test_z == nbhd_set[0].z, test_z == nbhd_set[1].z, test_z == nbhd_set[2].z, test_z == nbhd_set[3].z)
+    //test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, max(nbhd_set[3].z, new_val.z))));
+    //find = ivec4(test_z == nbhd_set[0].z, test_z == nbhd_set[1].z, test_z == nbhd_set[2].z, test_z == nbhd_set[3].z);// *  ivec4(0 == nbhd_set[0].z, 0 == nbhd_set[1].z, 0 == nbhd_set[2].z, 0 == nbhd_set[3].z);
+    
     test_ind = 1 * int(test_z == nbhd_set[1].z) + 2 * int(test_z == nbhd_set[2].z) + 3 * int(test_z == nbhd_set[3].z); 
+
+    if (test_z == nbhd_set[0].z) {
+        nbhd_set[0] = new_val;
+    }
+    else if (test_z == nbhd_set[1].z) {
+        nbhd_set[1] = new_val;
+    }
+    else if (test_z == nbhd_set[2].z) {
+        nbhd_set[2] = new_val;
+    }
+    else if (test_z == nbhd_set[3].z) {
+        nbhd_set[3] = new_val;
+    }
     
     // find the minimum between current max value and the new value
-    test_z = min(new_val.z, nbhd_set[test_ind].z);
-    nbhd_set[test_ind] = new_val * int(test_z == new_val.z) + nbhd_set[test_ind] * int(test_z != new_val.z);
+    //test_z = min(new_val.z, nbhd_set[test_ind].z);
+    //nbhd_set[test_ind] = new_val * int(test_z == new_val.z) + nbhd_set[test_ind] * int(test_z != new_val.z);
 }
 
 // calculate squared neighborhood distance for neighborhood of size k
@@ -55,11 +70,14 @@ float nbhd_dist(ivec2 a_ij, ivec2 b_ij, int k) {
 }
 
 void main(void) {
+    for (int i = 0; i < 4; i++) {
+        nbhd_set[i] = vec3(99999.0f);
+    }
     // calculate the shift
     int shift = int(nbhd * 0.5);
     ivec2 size = textureSize(exemplar, 0);
     ivec2 cur_pos = ivec2(size * uv_coord);
-    
+
     // loop over all of the pixels in the image, only iterate over the middle
     //  to avoid the edge cases
     vec3 cur_vals;
@@ -75,6 +93,7 @@ void main(void) {
         matches_x[i] = nbhd_set[i].x;
         matches_y[i] = nbhd_set[i].y;
     }
+
     matches_x /= vec4(textureSize(exemplar, 0).x);
     matches_y /= vec4(textureSize(exemplar, 0).y);
 }
