@@ -217,7 +217,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
         glUseProgram(p);
 		glBindFragDataLocation(p,0,"colorOut");
 		GLint m = glGetUniformLocation(p,"m");
-		glUniform1ui(m,96);
+		glUniform1ui(m,64);
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
 		checkGlError(2);
@@ -322,7 +322,7 @@ int main( void ) {
     glGenTextures(1,&example);
 	cout << example << endl;
 	GLFWimage imbuf;
-	glfwReadImage("rice.tga",&imbuf,0);
+	glfwReadImage("regular.tga",&imbuf,0);
 	cout << imbuf.Width << endl << imbuf.Height << endl;
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, example);
@@ -331,6 +331,7 @@ int main( void ) {
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,imbuf.Width,imbuf.Height,0,imbuf.Format,GL_UNSIGNED_BYTE,(void*)imbuf.Data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    cout << imbuf.Width << imbuf.Height << endl;
 	checkGlError(99);
 	//cout << example << endl;
     runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, q);

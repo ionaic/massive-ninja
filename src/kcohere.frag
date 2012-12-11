@@ -64,6 +64,13 @@ void main(void) {
     ivec2 lc;
     ivec2 begin = max(c_ex - ivec2(shift),ivec2(0));
     ivec2 end = min(c_ex + ivec2(shift),textureSize(res,0));
+    
+    if (begin != ivec2(c_ex-ivec2(shift)) || end != ivec2(c_ex+ivec2(shift))) {
+        kcoh_set_x = vec4(texelFetch(res,c_ex,0).x);
+        kcoh_set_y = vec4(texelFetch(res,c_ex,0).y);
+        return;
+    }
+
     for (int i = begin.x; i<=end.x; i++) {
         for (int j = begin.y; j<=end.y; j++) {
             lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * textureSize(example_texture, 0));
@@ -71,7 +78,7 @@ void main(void) {
             index++;
         }
     }
-    
+
     // store the current min val
     float min_val = nbhd_set[0].z;
     ivec3 swap_val;
@@ -93,12 +100,12 @@ void main(void) {
             nbhd_set[i] = swap_val;
         }
     }
-
     for (int i = 0; i < 4; i++) {
         kcoh_set_x[i] = nbhd_set[i].x;
         kcoh_set_y[i] = nbhd_set[i].y;
     }
+    kcoh_set_x /= vec4(textureSize(example_texture, 0).x);
+    kcoh_set_y /= vec4(textureSize(example_texture, 0).y);
 
-    kcoh_set_x /= vec4(textureSize(res, 0).x);
-    kcoh_set_y /= vec4(textureSize(res, 0).y);
 }
+
