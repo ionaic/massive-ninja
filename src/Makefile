@@ -11,7 +11,7 @@ clang:
 	clang++ $(GLINCL) $(SRC) -o $(DEST)
 
 old:
-	$(CC) $(GLINCL) $(OLDSRC) -o $(DEST)
+	$(CC) $(GLINCL) $(OLDSRC) -o ./OLD/$(DEST)
 
 debug: $(SRC)
 	$(CC) -g $(GLINCL) $(SRC) -o $(DEST)

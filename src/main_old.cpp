@@ -160,9 +160,13 @@ GLuint createFBO(GLuint texture) {
 GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	GLuint r = initShaders("minimal.vert", "correction.frag");
-	GLint r_tex = glGetUniformLocation(q, "res");
-	GLint r_exemplar = glGetUniformLocation(q,"ex");
-	
+	GLint r_exemplar = glGetUniformLocation(r,"example_texture");
+	GLint r_tex = glGetUniformLocation(r, "res");
+	GLint r_coords_x = glGetUniformLocation(r,"coords_x");
+	GLint r_coords_y = glGetUniformLocation(r,"coords_y");
+	cout << r_tex << ": " << r_exemplar << endl;
+	cout << r_coords_x << ": " << r_coords_y << endl;
+
 	checkGlError(8);
 	GLint tex = glGetUniformLocation(p, "tex");
 	glUseProgram(p);
@@ -206,13 +210,15 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,ttex);
-        FBO = createFBO(ttex2);
+        FBO = createFBO(pyramid[i]);
         glUseProgram(r);
         glBindFragDataLocation(r,0,"out_color");
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
         glUniform1i(r_exemplar,1);
         glUniform1i(r_tex,0);
+        glUniform1i(r_coords_x,1);
+        glUniform1i(r_coords_y,1);
         
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
@@ -221,7 +227,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
         glDeleteFramebuffers(1,&FBO);
 		checkGlError(2);
         glPopAttrib();
-
+		/*
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,ttex2);
         FBO = createFBO(pyramid[i]);
@@ -238,7 +244,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
         glBindFramebuffer(GL_FRAMEBUFFER,0);
         glDeleteFramebuffers(1,&FBO);
 		checkGlError(2);
-        glPopAttrib();
+        glPopAttrib();*/
     }
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);
@@ -266,6 +272,7 @@ int main( void ) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	initGeometry();
+	glEnable( GL_TEXTURE_2D );
 	GLuint q = initShaders("minimal.vert", "tex.frag");
     // Main loop
 	glActiveTexture(GL_TEXTURE0);
@@ -276,6 +283,7 @@ int main( void ) {
     }
 	GLuint example;
     glGenTextures(1,&example);
+	checkGlError(98);
 	cout << example << endl;
 	GLFWimage imbuf;
 	glfwReadImage("rice.tga",&imbuf,0);

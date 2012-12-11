@@ -6,7 +6,7 @@ precision highp float; // needed only for version 1.30
 
 uniform sampler2D tex; // previous level of the texture pyramid 
 uniform uint m; // exemplar image size
-in  vec2 uv_coord; // texture coordinate in tex. comes in at 2x res of tex
+in  vec2 ex_UV; // texture coordinate in tex. comes in at 2x res of tex
 in vec4 gl_FragCoord; // coordinate of current fragment on screen (in output texture in this case)
 out vec4 colorOut; // output color for this pixel
 
@@ -88,13 +88,12 @@ void main(void) {
 	ivec2 p = ivec2(gl_FragCoord.xy);
 	ivec2 p0 = p/2;
     vec2 inc = vec2(p.x&1,p.y&1)/vec2(m,m);
-	inc = 2*texture(tex,uv_coord).xy+inc;
-    //inc *= vec2(20, 20);
+	inc = 2*texture(tex,ex_UV).xy+inc;
 	inc = mod(inc,1);
     colorOut = vec4(inc,0,0);
     return;
 	// jitter
-    float r = 0.0;
+    float r = 0.;
 	vec2 n = vec2(snoise(gl_FragCoord.xy), snoise(600*vec2(1.,1.)/gl_FragCoord.xy));
     n = mod(n, 1);
     n *= 2;

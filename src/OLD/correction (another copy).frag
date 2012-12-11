@@ -1,12 +1,11 @@
 // Fragment Shader - file "correction.frag"
 
 #version 330
-
 precision highp float; // needed only for version 1.30
 
-uniform sampler2D example_texture; // example texture
 uniform sampler2D res; // synthesized texture
 uniform sampler2D coords_x;
+uniform sampler2D example_texture; // example texture
 uniform sampler2D coords_y;
 in vec4 gl_FragCoord; // coordinate of current fragment on screen
 in vec2 uv_coord; // uv coordinate
@@ -41,8 +40,6 @@ ivec2 unpackCoord(float coord) {
 }
 
 void main(void) {
-    colorOut = vec4(texture(coords_x,uv_coord).x, texture(coords_y,uv_coord).x, 0, 0);
-    return;
     //nbhd_dist(glFragCoord, ivec2(uv_coord * textureSize(example_texture, 0)), 5);
     ivec2 size = textureSize(res,0);
     ivec2 my_pos = ivec2(vec2(size) * uv_coord);
@@ -65,7 +62,6 @@ void main(void) {
     //vec2 newCoord = vec2(coord) / vec2(textureSize(res,0));
      
     colorOut = vec4(newCoord,0,0);
-    //colorOut = texture(res,uv_coord);
-    //colorOut = texture(coords_y, uv_coord);
+	colorOut = texture(example_texture, uv_coord);
     //colorOut = texture(coords, uv_coord); // for now, just output the same texture coord
 }

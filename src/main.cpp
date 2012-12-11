@@ -122,8 +122,8 @@ GLuint createBlankTex(GLuint size) {
     glBindTexture( GL_TEXTURE_2D, texture );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ); 
-    void* data = calloc(size*size,sizeof(GLuint));
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB16,size,size,0,GL_RGB,GL_UNSIGNED_SHORT,0);
+    void* data = calloc(size*size,3 * sizeof(GLushort));
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB16,size,size,0,GL_RGB,GL_UNSIGNED_SHORT,data);
     free(data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -170,14 +170,20 @@ GLuint createFBO(GLuint texture, GLuint texture2) {
     return FBO;
 }
 
-GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
+GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GLuint pyramid_z[], GLuint exemplar,GLuint q) {
+    // init shaders (minimal, correction, kcohere, all with minimal.vert as vert shader)
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	GLuint r = initShaders("minimal.vert", "correction.frag");
-	GLuint k = initShaders("minimal.vert", "test.frag");
+	GLuint k = initShaders("minimal.vert", "kcohere.frag");
+
+    // setup the inputs for the correction.frag shader
     GLint r_tex = glGetUniformLocation(r, "res");
 	GLint r_exemplar = glGetUniformLocation(r,"example_texture");
     GLint r_coords_x = glGetUniformLocation(r,"coords_x");
     GLint r_coords_y = glGetUniformLocation(r,"coords_y");
+	cout << r_tex << r_exemplar << r_coords_x << r_coords_y << endl;
+
+    // setup the inputs for the kcohere.frag shader
     GLint k_tex = glGetUniformLocation(k,"res");
     GLint k_exemplar = glGetUniformLocation(k,"example_texture");
 	
@@ -195,20 +201,22 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 	int size[10] = {1,2,4,8,16,32,64,128,256,512};
 	cout << "GL_FRAMEBUFFER_COMPLETE: " << GL_FRAMEBUFFER_COMPLETE << endl;
 	for (GLuint i=1; i<10; ++i) {
+        // initialize blank textures
         GLuint ttex = createBlankTex(size[i]);	
         GLuint ttex2 = createBlankTex(size[i]);
         GLuint ttex3 = createBlankTex(size[i]);
-		// bind textures
+
+		// shader pass 1 bind textures
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, pyramid[i-1]);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, exemplar);
 	
-		GLuint FBO = createFBO(pyramid[i]);
+        GLuint FBO = createFBO((i<3?pyramid[i]:pyramid_z[i]));
         glUseProgram(p);
 		glBindFragDataLocation(p,0,"colorOut");
 		GLint m = glGetUniformLocation(p,"m");
-		glUniform1ui(m,96);
+		glUniform1ui(m,64);
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
 		checkGlError(2);
@@ -218,20 +226,22 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-		//glfwSwapBuffegetkeyrs();
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glDeleteFramebuffers(1,&FBO);
         glPopAttrib();
-        continue;
+       if (i<3) {
+            continue;
+        }
         // shader pass 2	
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,ttex);
-        FBO = createFBO(pyramid[i]);
+        glBindTexture(GL_TEXTURE_2D,pyramid_z[i]);
+        //FBO = createFBO(ttex2,ttex3);
+        FBO = createFBO(pyramid_x[i], pyramid_y[i]);
         glUseProgram(k);
         glBindFragDataLocation(k,0,"kcoh_set_x");
         cout << "X: " << glGetFragDataLocation(k,"kcoh_set_x") << endl;
-        //glBindFragDataLocation(k,1,"kcoh_set_y");
-        //cout << "Y: " << glGetFragDataLocation(k,"kcoh_set_y") << endl;
+        glBindFragDataLocation(k,1,"kcoh_set_y");
+        cout << "Y: " << glGetFragDataLocation(k,"kcoh_set_y") << endl;
 		glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
 		glViewport(0, 0, size[i], size[i]);
         glUniform1i(k_exemplar,1);
@@ -244,12 +254,12 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint exemplar,GLuint q) {
         glDeleteFramebuffers(1,&FBO);
 		checkGlError(2);
         glPopAttrib();
-        continue;
+        
         // shader pass 3
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D,ttex2);
+        glBindTexture(GL_TEXTURE_2D,pyramid_x[i]);
         glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D,ttex3);
+        glBindTexture(GL_TEXTURE_2D,pyramid_y[i]);
         FBO = createFBO(pyramid[i]);
         glUseProgram(r);
         glBindFragDataLocation(r,0,"colorOut");
@@ -296,16 +306,22 @@ int main( void ) {
 	GLuint q = initShaders("minimal.vert", "tex.frag");
     // Main loop
 	glActiveTexture(GL_TEXTURE0);
+    GLuint pyramid_x[10];
+    GLuint pyramid_y[10];
+    GLuint pyramid_u[10];
     GLuint pyramid[10];
     for (int i = 0, j=1; i<10; ++i, j*=2) {
         pyramid[i] = createBlankTex(j);
-		cout << pyramid[i] << endl;
+        pyramid_x[i] = createBlankTex(j);
+        pyramid_y[i] = createBlankTex(j);
+		pyramid_u[i] = createBlankTex(j);
+        cout << pyramid[i] << endl;
     }
 	GLuint example;
     glGenTextures(1,&example);
 	cout << example << endl;
 	GLFWimage imbuf;
-	glfwReadImage("rice.tga",&imbuf,0);
+	glfwReadImage("regular.tga",&imbuf,0);
 	cout << imbuf.Width << endl << imbuf.Height << endl;
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, example);
@@ -314,9 +330,10 @@ int main( void ) {
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,imbuf.Width,imbuf.Height,0,imbuf.Format,GL_UNSIGNED_BYTE,(void*)imbuf.Data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    cout << imbuf.Width << imbuf.Height << endl;
 	checkGlError(99);
 	//cout << example << endl;
-    runAlgorithm(pyramid,example,q);
+    runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, q);
     int running = GL_TRUE;
 	int hasrun= GL_TRUE;
     int firstrun = GL_TRUE;
@@ -332,12 +349,13 @@ int main( void ) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, example);
     glUniform1i(mode, 0);
+    int set = 0;
     while( running ) {
 	    if (glfwGetKey(GLFW_KEY_SPACE) || firstrun == GL_TRUE) {
             firstrun = GL_FALSE;
             if (hasrun == GL_FALSE) {
                 hasrun = GL_TRUE;
-                runAlgorithm(pyramid,example, q);
+                runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, q);
 				glViewport(0,0,512,512);
             }
         } else {
@@ -347,7 +365,7 @@ int main( void ) {
 			if (glfwGetKey('0'+i)) {
 				glUniform1i(tex,0);
 				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, pyramid[i]);
+				glBindTexture(GL_TEXTURE_2D, (set==0?pyramid[i]:(set==1?pyramid_u[i]:(set==2?pyramid_x[i]:pyramid_y[i]))));
 				glUniform1i(exemplar,1);
 				glActiveTexture(GL_TEXTURE1);
 				glBindTexture(GL_TEXTURE_2D, example);
@@ -362,6 +380,18 @@ int main( void ) {
 		if (glfwGetKey(GLFW_KEY_F3)) {
 			glUniform1i(mode, 2);
 		}
+        if (glfwGetKey(GLFW_KEY_F5)) {
+            set = 0;
+        }
+        if (glfwGetKey(GLFW_KEY_F6)) {
+            set = 1;
+        }
+        if (glfwGetKey(GLFW_KEY_F7)) {
+            set = 2;
+        }
+        if (glfwGetKey(GLFW_KEY_F8)) {
+            set=3;
+        }
         // OpenGL rendering goes here...
 		glClear( GL_COLOR_BUFFER_BIT );
 		// draw the triangle
