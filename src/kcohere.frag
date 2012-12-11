@@ -46,6 +46,21 @@ float nbhd_dist(ivec2 ex_ij, ivec2 cur_ij, int k) {
     return dist.r + dist.g + dist.b + dist.a;
 }
 
+ivec2 imsize;
+void doComparison(ivec2 lc, ivec2 c_cur) {
+    float dist, tmp, equiv;
+    vec4 finder, ifinder;
+    // calc the distance
+    dist = nbhd_dist(lc, c_cur, 5);
+    // stick this value in the top 4 if it belongs there
+    tmp = max(dist,max(kcoh_set_dist.x,max(kcoh_set_dist.y,max(kcoh_set_dist.z,kcoh_set_dist.w))));
+    finder = vec4(tmp==kcoh_set_dist.x, tmp==kcoh_set_dist.y, tmp==kcoh_set_dist.z, tmp==kcoh_set_dist.w);
+    ifinder = vec4(1) - finder;
+    kcoh_set_dist = finder * kcoh_set_dist + ifinder * vec4(tmp);
+    kcoh_set_x = finder * kcoh_set_x + ifinder * vec4(float(lc.x)/float(imsize.x));
+    kcoh_set_y = finder * kcoh_set_y + ifinder * vec4(float(lc.y)/float(imsize.y));
+}
+
 void main(void) {
     int shift = int(0.5 * nbhd);
     // reposition the neighborhood so that it fits within bounds.
@@ -67,23 +82,14 @@ void main(void) {
         kcoh_set_y = vec4(texelFetch(res,c_ex,0).y);
         return;
     }
-    float dist, tmp, equiv;
-    vec4 finder, ifinder;
-    ivec2 imsize = textureSize(example_texture, 0);
+    imsize = textureSize(example_texture, 0);
     for (int i = begin.x; i<=end.x; i++) {
         for (int j = begin.y; j<=end.y; j++) {
             lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * imsize);
-            dist = nbhd_dist(lc, c_cur, 5);
-            // stick this value in the top 4 if it belongs there
-            tmp = max(dist,max(kcoh_set_dist.x,max(kcoh_set_dist.y,max(kcoh_set_dist.z,kcoh_set_dist.w))));
-            finder = vec4(tmp==kcoh_set_dist.x, tmp==kcoh_set_dist.y, tmp==kcoh_set_dist.z, tmp==kcoh_set_dist.w);
-            ifinder = vec4(1) - finder;
-            kcoh_set_dist = finder * kcoh_set_dist + ifinder * vec4(tmp);
-            kcoh_set_x = finder * kcoh_set_x + ifinder * vec4(float(lc.x)/float(imsize.x));
-            kcoh_set_y = finder * kcoh_set_y + ifinder * vec4(float(lc.y)/float(imsize.y));
+            doComparison(lc,c_cur);
         }
     }
-    tmp = min(kcoh_set_dist.x, min(kcoh_set_dist.y, min(kcoh_set_dist.z, kcoh_set_dist.w)));
+    float tmp = min(kcoh_set_dist.x, min(kcoh_set_dist.y, min(kcoh_set_dist.z, kcoh_set_dist.w)));
     if (tmp == kcoh_set_dist.y) {
         tmp = kcoh_set_x.x;
         kcoh_set_x.x = kcoh_set_x.y;
