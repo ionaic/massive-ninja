@@ -13,10 +13,12 @@ float min_val;
 // store the nearest 4 neighborhoods
 vec3 nbhd_set[4];
 
+// size of the neighborhood we're looking at
 #define nbhd 5
 
+// keep only the smallest 4 out of the 4 current smallest and the new value
 void keepSmallest(vec3 new_val) {
-    min_val = = nbhd_set[0].z
+    min_val == nbhd_set[0].z
     // compare the given value to the existing values
     for (int i = 0; i < 4; i++) {
         // find the min val between the newcomer and this value
@@ -52,14 +54,17 @@ float nbhd_dist(ivec2 a_ij, ivec2 b_ij, int k) {
 void main(void) {
     // calculate the shift
     int shift = int(nbhd * 0.5);
+    ivec2 size textureSize(exemplar, 0);
+    ivec2 cur_pos = ivec2(size * uv_coords);
     
     // loop over all of the pixels in the image, only iterate over the middle
     //  to avoid the edge cases
     vec3 cur_vals;
-    for (int i = shift; i < textureSize(exemplar, 0).y; i++) {
-        for (int j = shift; j < textureSize(exemplar, 0).x; j++) {
+    for (int i = shift; i < size.y; i++) {
+        for (int j = shift; j < size.x; j++) {
             cur_vals.xy = vec2(j, i);
-            cur_vals.z = nbhd_dist(ivec2(cur_vals.xy), );
+            cur_vals.z = nbhd_dist(ivec2(cur_vals.xy), cur_pos, nbhd);
+            keepSmallest(cur_vals);
         }
     }
 
@@ -70,8 +75,7 @@ void main(void) {
     matches_x /= vec4(textureSize(exemplar, 0).x);
     matches_y /= vec4(textureSize(exemplar, 0).y);
 
-	matches_x = vec4(uv_coord.x);
-	matches_y = vec4(uv_coord.y);
-    return;
+	//matches_x = vec4(uv_coord.x);
+	//matches_y = vec4(uv_coord.y);
 }
 
