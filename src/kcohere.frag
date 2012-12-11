@@ -100,7 +100,7 @@ void main(void) {
             nbhd_set[i] = swap_val;
         }
     }
-   for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++) {
         kcoh_set_x[i] = nbhd_set[i].x;
         kcoh_set_y[i] = nbhd_set[i].y;
     }
