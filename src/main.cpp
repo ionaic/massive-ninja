@@ -170,7 +170,7 @@ GLuint createFBO(GLuint texture, GLuint texture2) {
     return FBO;
 }
 
-GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GLuint pyramid_z[], GLuint exemplar,GLuint q) {
+GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GLuint pyramid_z[], GLuint exemplar) {
     // init shaders (minimal, correction, kcohere, all with minimal.vert as vert shader)
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	GLuint r = initShaders("minimal.vert", "correction.frag");
@@ -186,8 +186,10 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
     // setup the inputs for the kcohere.frag shader
     GLint k_tex = glGetUniformLocation(k,"res");
     GLint k_exemplar = glGetUniformLocation(k,"example_texture");
+	GLint k_matches_x = glGetUniformLocation(k,"matches_x");
+    GLint k_matches_y = glGetUniformLocation(k,"matches_x");
 	
-	checkGlError(8);
+    checkGlError(8);
 	GLint tex = glGetUniformLocation(p, "tex");
 	glUseProgram(p);
 	cout << tex << endl;
@@ -246,7 +248,9 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
 		glViewport(0, 0, size[i], size[i]);
         glUniform1i(k_exemplar,1);
         glUniform1i(k_tex,0);
-        
+        glUniform1i(k_matches_x,4);
+        glUniform1i(k_matches_y,5);    
+    
 		glClear( GL_COLOR_BUFFER_BIT );
 		glBindVertexArray(vertexArrayID);
         glDrawArrays(GL_TRIANGLE_STRIP,0,4);
@@ -279,7 +283,6 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
     }
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);
-	glUseProgram(q);
     return p;
 }
 
@@ -372,7 +375,8 @@ int main( void ) {
     GLuint matches_x, matches_y;
     prepass(example, 64, matches_x, matches_y);
 
-    runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, q);
+    runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example);
+    glUseProgram(q);
     int running = GL_TRUE;
 	int hasrun= GL_TRUE;
     int firstrun = GL_TRUE;
@@ -394,7 +398,7 @@ int main( void ) {
             firstrun = GL_FALSE;
             if (hasrun == GL_FALSE) {
                 hasrun = GL_TRUE;
-                runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, q);
+                runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example);
 				glViewport(0,0,512,512);
             }
         } else {

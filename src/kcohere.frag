@@ -6,6 +6,9 @@ precision highp float; // needed only for version 1.30
 
 uniform sampler2D example_texture; // example texture
 uniform sampler2D res; // synthesized texture
+uniform sampler2D matches_x;
+uniform sampler2D matches_y;
+
 in vec2 uv_coord; // uv coordinate
 #define k_val 4 // the number of values to return in the set
 #define nbhd 5
