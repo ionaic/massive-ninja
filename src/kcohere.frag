@@ -46,44 +46,56 @@ float nbhd_dist(ivec2 ex_ij, ivec2 cur_ij, int k) {
     return dist.r + dist.g + dist.b + dist.a;
 }
 
-void main(void) {
-    int shift = int(0.5 * nbhd);
-    // reposition the neighborhood so that it fits within bounds.
-    //  if it is out of bounds, shift where the pixel is within the 
-    //  neighborhood so that it fits properly
-    ivec2 c_cur = ivec2(uv_coord * textureSize(res, 0));
-    ivec2 c_ex = c_cur;
-
-    // array to store the neighborhood
-    int index = 0;
-
-    // iterate over neighborhood and calculate the neighborhood distances
-    ivec2 lc;
-    ivec2 begin = max(c_ex - ivec2(shift),ivec2(0));
-    ivec2 end = min(c_ex + ivec2(shift),textureSize(res,0));
-    
-    if (begin != ivec2(c_ex-ivec2(shift)) || end != ivec2(c_ex+ivec2(shift))) {
-        kcoh_set_x = vec4(texelFetch(res,c_ex,0).x);
-        kcoh_set_y = vec4(texelFetch(res,c_ex,0).y);
-        return;
-    }
+ivec2 imsize;
+void doComparison(ivec2 lc, ivec2 c_cur) {
     float dist, tmp, equiv;
     vec4 finder, ifinder;
-    ivec2 imsize = textureSize(example_texture, 0);
+    // calc the distance
+    dist = nbhd_dist(lc, c_cur, 5);
+    // stick this value in the top 4 if it belongs there
+    tmp = max(dist,max(kcoh_set_dist.x,max(kcoh_set_dist.y,max(kcoh_set_dist.z,kcoh_set_dist.w))));
+    finder = vec4(tmp==kcoh_set_dist.x, tmp==kcoh_set_dist.y, tmp==kcoh_set_dist.z, tmp==kcoh_set_dist.w);
+    ifinder = vec4(1) - finder;
+    kcoh_set_dist = finder * kcoh_set_dist + ifinder * vec4(tmp);
+    kcoh_set_x = finder * kcoh_set_x + ifinder * vec4(float(lc.x)/float(imsize.x));
+    kcoh_set_y = finder * kcoh_set_y + ifinder * vec4(float(lc.y)/float(imsize.y));
+}
+
+void main(void) {
+    int shift = int(0.5 * nbhd);
+    //  find our center
+    ivec2 c_cur = ivec2(uv_coord * textureSize(res, 0));
+
+    // define the beginning end ending offsets for our search
+    ivec2 lc;
+    ivec2 begin = max(c_cur - ivec2(shift),ivec2(0));
+    ivec2 end = min(c_cur + ivec2(shift),textureSize(res,0));
+    // short-circuit if we don't have a full neighborhood
+    if (begin != ivec2(c_cur-ivec2(shift)) || end != ivec2(c_cur+ivec2(shift))) {
+        kcoh_set_x = vec4(texelFetch(res,c_cur,0).x);
+        kcoh_set_y = vec4(texelFetch(res,c_cur,0).y);
+        return;
+    }
+    imsize = textureSize(example_texture, 0);
+    // find the top 4 best
     for (int i = begin.x; i<=end.x; i++) {
         for (int j = begin.y; j<=end.y; j++) {
-            lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * imsize);
-            dist = nbhd_dist(lc, c_cur, 5);
-            // stick this value in the top 4 if it belongs there
-            tmp = max(dist,max(kcoh_set_dist.x,max(kcoh_set_dist.y,max(kcoh_set_dist.z,kcoh_set_dist.w))));
-            finder = vec4(tmp==kcoh_set_dist.x, tmp==kcoh_set_dist.y, tmp==kcoh_set_dist.z, tmp==kcoh_set_dist.w);
-            ifinder = vec4(1) - finder;
-            kcoh_set_dist = finder * kcoh_set_dist + ifinder * vec4(tmp);
-            kcoh_set_x = finder * kcoh_set_x + ifinder * vec4(float(lc.x)/float(imsize.x));
-            kcoh_set_y = finder * kcoh_set_y + ifinder * vec4(float(lc.y)/float(imsize.y));
+            ivec2 match_coord = ivec2(texelFetch(res, ivec2(i,j), 0).xy * imsize);
+            vec4 match_x = texelFetch(matches_x,match_coord,0);
+            vec4 match_y = texelFetch(matches_y,match_coord,0);
+            lc = ivec2(match_x.x*imsize.x, match_y.x*imsize.y);
+            doComparison(lc,c_cur);
+            lc = ivec2(match_x.y*imsize.x, match_y.y*imsize.y);
+            doComparison(lc,c_cur);
+            lc = ivec2(match_x.z*imsize.x, match_y.z*imsize.y);
+            doComparison(lc,c_cur);
+            lc = ivec2(match_x.w*imsize.x, match_y.w*imsize.y);
+            doComparison(lc,c_cur);
+            //doComparison(match_coord+(ivec2(i,j)-c_cur),c_cur);
         }
     }
-    tmp = min(kcoh_set_dist.x, min(kcoh_set_dist.y, min(kcoh_set_dist.z, kcoh_set_dist.w)));
+    // sort the top 1 to the top of the list
+    float tmp = min(kcoh_set_dist.x, min(kcoh_set_dist.y, min(kcoh_set_dist.z, kcoh_set_dist.w)));
     if (tmp == kcoh_set_dist.y) {
         tmp = kcoh_set_x.x;
         kcoh_set_x.x = kcoh_set_x.y;
