@@ -63,32 +63,28 @@ void doComparison(ivec2 lc, ivec2 c_cur) {
 
 void main(void) {
     int shift = int(0.5 * nbhd);
-    // reposition the neighborhood so that it fits within bounds.
-    //  if it is out of bounds, shift where the pixel is within the 
-    //  neighborhood so that it fits properly
+    //  find our center
     ivec2 c_cur = ivec2(uv_coord * textureSize(res, 0));
-    ivec2 c_ex = c_cur;
 
-    // array to store the neighborhood
-    int index = 0;
-
-    // iterate over neighborhood and calculate the neighborhood distances
+    // define the beginning end ending offsets for our search
     ivec2 lc;
-    ivec2 begin = max(c_ex - ivec2(shift),ivec2(0));
-    ivec2 end = min(c_ex + ivec2(shift),textureSize(res,0));
-    
-    if (begin != ivec2(c_ex-ivec2(shift)) || end != ivec2(c_ex+ivec2(shift))) {
-        kcoh_set_x = vec4(texelFetch(res,c_ex,0).x);
-        kcoh_set_y = vec4(texelFetch(res,c_ex,0).y);
+    ivec2 begin = max(c_cur - ivec2(shift),ivec2(0));
+    ivec2 end = min(c_cur + ivec2(shift),textureSize(res,0));
+    // short-circuit if we don't have a full neighborhood
+    if (begin != ivec2(c_cur-ivec2(shift)) || end != ivec2(c_cur+ivec2(shift))) {
+        kcoh_set_x = vec4(texelFetch(res,c_cur,0).x);
+        kcoh_set_y = vec4(texelFetch(res,c_cur,0).y);
         return;
     }
     imsize = textureSize(example_texture, 0);
+    // find the top 4 best
     for (int i = begin.x; i<=end.x; i++) {
         for (int j = begin.y; j<=end.y; j++) {
             lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * imsize);
             doComparison(lc,c_cur);
         }
     }
+    // sort the top 1 to the top of the list
     float tmp = min(kcoh_set_dist.x, min(kcoh_set_dist.y, min(kcoh_set_dist.z, kcoh_set_dist.w)));
     if (tmp == kcoh_set_dist.y) {
         tmp = kcoh_set_x.x;
