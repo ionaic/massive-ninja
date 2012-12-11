@@ -16,20 +16,21 @@ vec3 nbhd_set[4];
 
 // keep only the smallest 4 out of the 4 current smallest and the new value
 void keepSmallest(vec3 new_val) {
-    // store the current max val
-    vec3 test_val == nbhd_set[0];
+    // store the current max value's index
+    int test_ind;
+    // store the current max distance
     float test_z;
+    // store which are the max
+    // ivec4 find;
 
     // find the maximum value in the current set
-    for (int i = 0; i < 4; i++) {
-        test_z = max(test_val.z, nbhd_set[i].z);
-        // find the min val between the newcomer and this value
-        test_val = test_val * int(test_val.z == test_z) + nbhd_set[i] * int(test_val.z != test_z);
-    }
-    test_z = max(test_val.z, new_val);
-    // find the min val between the newcomer and this value
-    test_val = test_val * int(test_val.z == test_z) + new_val * int(test_val.z != test_z);
+    test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, nbhd_set[3].z)));
+    //find = ivec4(test_z == nbhd_set[0].z, test_z == nbhd_set[1].z, test_z == nbhd_set[2].z, test_z == nbhd_set[3].z)
+    test_ind = 1 * int(test_z == nbhd_set[1].z) + 2 * int(test_z == nbhd_set[2].z) + 3 * int(test_z == nbhd_set[3].z); 
     
+    // find the minimum between current max value and the new value
+    test_z = min(new_val.z, nbhd_set[test_ind].z);
+    nbhd_set[test_ind] = new_val * int(test_z == new_val.z) + nbhd_set[test_ind] * int(test_z != new_val.z);
 }
 
 // calculate squared neighborhood distance for neighborhood of size k
