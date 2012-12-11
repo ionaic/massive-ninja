@@ -54,6 +54,8 @@ void doComparison(ivec2 lc, ivec2 c_cur) {
     dist = nbhd_dist(lc, c_cur, 5);
     // stick this value in the top 4 if it belongs there
     tmp = max(dist,max(kcoh_set_dist.x,max(kcoh_set_dist.y,max(kcoh_set_dist.z,kcoh_set_dist.w))));
+    //if (tmp == dist) {return;}
+    //if (tmp == kcoh_set_dist.x
     finder = vec4(tmp==kcoh_set_dist.x, tmp==kcoh_set_dist.y, tmp==kcoh_set_dist.z, tmp==kcoh_set_dist.w);
     ifinder = vec4(1) - finder;
     kcoh_set_dist = finder * kcoh_set_dist + ifinder * vec4(tmp);
@@ -62,7 +64,7 @@ void doComparison(ivec2 lc, ivec2 c_cur) {
 }
 
 void main(void) {
-    kcoh_set_dist = vec4(999999998,999999997,999999996,999999999);
+    //kcoh_set_dist = vec4(999999998,999999997,999999996,999999999);
     int shift = int(0.5 * nbhd);
     //  find our center
     ivec2 c_cur = ivec2(uv_coord * textureSize(res, 0));
@@ -85,14 +87,14 @@ void main(void) {
             vec4 match_x = texelFetch(matches_x,match_coord,0);
             vec4 match_y = texelFetch(matches_y,match_coord,0);
             lc = ivec2(match_x.x*imsize.x, match_y.x*imsize.y);
-            //doComparison(lc,c_cur);
+            doComparison(lc,c_cur);
             lc = ivec2(match_x.y*imsize.x, match_y.y*imsize.y);
-            //doComparison(lc,c_cur);
+            doComparison(lc,c_cur);
             lc = ivec2(match_x.z*imsize.x, match_y.z*imsize.y);
-            //doComparison(lc,c_cur);
+            doComparison(lc,c_cur);
             lc = ivec2(match_x.w*imsize.x, match_y.w*imsize.y);
-            //doComparison(lc,c_cur);
-            doComparison(match_coord,c_cur);
+            doComparison(lc,c_cur);
+            //doComparison(match_coord,c_cur);
         }
     }
     // sort the top 1 to the top of the list
