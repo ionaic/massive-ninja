@@ -15,7 +15,7 @@ in vec2 uv_coord; // uv coordinate
 
 out vec4 kcoh_set_x; // output x values
 out vec4 kcoh_set_y; // output y values
-
+vec4 kcoh_set_dist;
 // calculate squared neighborhood distance for neighborhood of size k
 float nbhd_dist(ivec2 ex_ij, ivec2 cur_ij, int k) {
     // calculate the shift
@@ -24,11 +24,7 @@ float nbhd_dist(ivec2 ex_ij, ivec2 cur_ij, int k) {
     // check if center is far enough away from boundary if not, shift the 
     //  position of the pixel in the neighborhood so that the neighborhood
     //  fits into the boundaries of the image
-    //ivec2 c_ex = clamp(ex_ij, ivec2(shift), textureSize(example_texture, 0) - ivec2(shift));
-    //ivec2 c_cur = clamp(cur_ij, ivec2(shift), textureSize(res, 0) - ivec2(shift));
     
-    //ivec4 cur_coord = ivec4(max(cur_ij - ivec2(shift), ivec2(0)), min(cur_ij + ivec2(shift), texturesize(res,0)));
-    //ivec4 ex_coord = ivec4(max(ex_ij - ivec2(shift), ivec2(0)), min(ex_ij + ivec2(shift), texturesize(example_texture,0)));
     ivec2 s_min = min(min(ex_ij-ivec2(shift),0),min(cur_ij-ivec2(shift),0));
     ivec2 s_max = ivec2(-1) * min(min(textureSize(example_texture,0)-ex_ij-ivec2(shift),0),min(textureSize(res,0)-cur_ij-ivec2(shift),0));
 
@@ -55,12 +51,10 @@ void main(void) {
     // reposition the neighborhood so that it fits within bounds.
     //  if it is out of bounds, shift where the pixel is within the 
     //  neighborhood so that it fits properly
-    //ivec2 c_cur = clamp(ivec2(uv_coord * textureSize(res, 0)), ivec2(shift), textureSize(res, 0) - shift);
     ivec2 c_cur = ivec2(uv_coord * textureSize(res, 0));
     ivec2 c_ex = c_cur;
 
     // array to store the neighborhood
-    ivec3 nbhd_set[nbhd * nbhd];
     int index = 0;
 
     // iterate over neighborhood and calculate the neighborhood distances
@@ -73,41 +67,48 @@ void main(void) {
         kcoh_set_y = vec4(texelFetch(res,c_ex,0).y);
         return;
     }
-
+    float dist, tmp, equiv;
+    vec4 finder, ifinder;
+    ivec2 imsize = textureSize(example_texture, 0);
     for (int i = begin.x; i<=end.x; i++) {
         for (int j = begin.y; j<=end.y; j++) {
-            lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * textureSize(example_texture, 0));
-            nbhd_set[index] = ivec3(lc, nbhd_dist(lc, c_cur, 5));
-            index++;
+            lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * imsize);
+            dist = nbhd_dist(lc, c_cur, 5);
+            // stick this value in the top 4 if it belongs there
+            tmp = max(dist,max(kcoh_set_dist.x,max(kcoh_set_dist.y,max(kcoh_set_dist.z,kcoh_set_dist.w))));
+            finder = vec4(tmp==kcoh_set_dist.x, tmp==kcoh_set_dist.y, tmp==kcoh_set_dist.z, tmp==kcoh_set_dist.w);
+            ifinder = vec4(1) - finder;
+            kcoh_set_dist = finder * kcoh_set_dist + ifinder * vec4(tmp);
+            kcoh_set_x = finder * kcoh_set_x + ifinder * vec4(float(lc.x)/float(imsize.x));
+            kcoh_set_y = finder * kcoh_set_y + ifinder * vec4(float(lc.y)/float(imsize.y));
         }
     }
+    tmp = min(kcoh_set_dist.x, min(kcoh_set_dist.y, min(kcoh_set_dist.z, kcoh_set_dist.w)));
+    if (tmp == kcoh_set_dist.y) {
+        tmp = kcoh_set_x.x;
+        kcoh_set_x.x = kcoh_set_x.y;
+        kcoh_set_x.y = tmp;
 
-    // store the current min val
-    float min_val = nbhd_set[0].z;
-    ivec3 swap_val;
+        tmp = kcoh_set_y.x;
+        kcoh_set_y.x = kcoh_set_y.y;
+        kcoh_set_y.y = tmp;
+    } else if (tmp == kcoh_set_dist.z) {
+        tmp = kcoh_set_x.x;
+        kcoh_set_x.x = kcoh_set_x.z;
+        kcoh_set_x.z = tmp;
 
-    // find the top k (4) values
-    for (int i = 0; i < 4; i++) {
-        // for each cell, loop over all to find the next minimum val
-        for (int j = i; j < index; j++) {
-            // find the min val
-            min_val = min(min_val, nbhd_set[j].z);
+        tmp = kcoh_set_y.x;
+        kcoh_set_y.x = kcoh_set_y.z;
+        kcoh_set_y.z = tmp;
+    } else if (tmp == kcoh_set_dist.w) {
+        tmp = kcoh_set_x.x;
+        kcoh_set_x.x = kcoh_set_x.w;
+        kcoh_set_x.w = tmp;
 
-            // choose the value to be put into cell i
-            swap_val = ivec3(nbhd_set[j] * int(nbhd_set[j].z == min_val)) + ivec3(nbhd_set[i] * int(nbhd_set[j].z != min_val));
-            
-            // move the current value at nbhd_set[i] to j if it needs to be moved
-            nbhd_set[j] = ivec3(nbhd_set[i] * int(nbhd_set[i].z != swap_val.z)) + ivec3(nbhd_set[j] * int(nbhd_set[i].z == swap_val.z));
-            
-            // value at nbhd_set[i] is now swap
-            nbhd_set[i] = swap_val;
-        }
+        tmp = kcoh_set_y.x;
+        kcoh_set_y.x = kcoh_set_y.w;
+        kcoh_set_y.w = tmp;
     }
-    for (int i = 0; i < 4; i++) {
-        kcoh_set_x[i] = nbhd_set[i].x;
-        kcoh_set_y[i] = nbhd_set[i].y;
-    }
-    kcoh_set_x /= vec4(textureSize(example_texture, 0).x);
-    kcoh_set_y /= vec4(textureSize(example_texture, 0).y);
+    return;
 }
 
