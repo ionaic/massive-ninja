@@ -283,8 +283,39 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
     return p;
 }
 
-GLuint prepass(GLuint exemplar, GLuint size) {
-	GLuint p = initShaders("minimal.vert", "minimal.frag");
+void prepass(GLuint exemplar, GLuint size, GLuint &matches_x, GLuint &matches_y) {
+    // initialize the shaders
+    GLuint prepass = initShaders("minimal.vert", "test.frag");
+    GLint exemplar_loc = glGetUniformLocation(prepass, "exemplar");
+    glUseProgram(prepass);
+    
+    // initialize the framebuffer
+	matches_x = createBlankTex(size);
+    matches_y = createBlankTex(size);
+    GLuint FBO = createFBO(matches_x, matches_y);
+
+    // configure shader inputs
+    glUniform1i(exemplar_loc,0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, exemplar);
+
+    // configure shader outputs
+    glBindFragDataLocation(prepass,0,"matches_x");
+    glBindFragDataLocation(prepass,1,"matches_y");
+
+    // initialize the rendering state
+    glPushAttrib(GL_VIEWPORT_BIT | GL_ENABLE_BIT);
+    glViewport(0, 0, size, size);    
+
+    // execute the prepass
+    glBindVertexArray(vertexArrayID);
+    glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+    
+    // release resources
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glDeleteFramebuffers(1,&FBO);
+    glDeleteProgram(prepass);
+    glPopAttrib();
 }
 
 int main( void ) {
@@ -337,6 +368,10 @@ int main( void ) {
     cout << imbuf.Width << imbuf.Height << endl;
 	checkGlError(99);
 	//cout << example << endl;
+    
+    GLuint matches_x, matches_y;
+    prepass(example, 64, matches_x, matches_y);
+
     runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, q);
     int running = GL_TRUE;
 	int hasrun= GL_TRUE;
@@ -377,12 +412,18 @@ int main( void ) {
 		}
 		if (glfwGetKey(GLFW_KEY_F1)) {
 			glUniform1i(mode, 0);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, example);
 		}
 		if (glfwGetKey(GLFW_KEY_F2)) {
 			glUniform1i(mode, 1);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, example);
 		}
 		if (glfwGetKey(GLFW_KEY_F3)) {
 			glUniform1i(mode, 2);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, example);
 		}
         if (glfwGetKey(GLFW_KEY_F5)) {
             set = 0;
@@ -396,6 +437,16 @@ int main( void ) {
         if (glfwGetKey(GLFW_KEY_F8)) {
             set=3;
         }
+		if (glfwGetKey(GLFW_KEY_F9)) {
+			glUniform1i(mode, 2);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, matches_x);
+		}
+		if (glfwGetKey(GLFW_KEY_F10)) {
+			glUniform1i(mode, 2);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, matches_y);
+		}
         // OpenGL rendering goes here...
 		glClear( GL_COLOR_BUFFER_BIT );
 		// draw the triangle
