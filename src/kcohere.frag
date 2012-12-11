@@ -80,8 +80,18 @@ void main(void) {
     // find the top 4 best
     for (int i = begin.x; i<=end.x; i++) {
         for (int j = begin.y; j<=end.y; j++) {
-            lc = ivec2(texelFetch(res, ivec2(i,j), 0).xy * imsize);
+            ivec2 match_coord = ivec2(texelFetch(res, ivec2(i,j), 0).xy * imsize);
+            vec4 match_x = texelFetch(matches_x,match_coord,0);
+            vec4 match_y = texelFetch(matches_y,match_coord,0);
+            lc = ivec2(match_x.x*imsize.x, match_y.x*imsize.y);
             doComparison(lc,c_cur);
+            lc = ivec2(match_x.y*imsize.x, match_y.y*imsize.y);
+            doComparison(lc,c_cur);
+            lc = ivec2(match_x.z*imsize.x, match_y.z*imsize.y);
+            doComparison(lc,c_cur);
+            lc = ivec2(match_x.w*imsize.x, match_y.w*imsize.y);
+            doComparison(lc,c_cur);
+            //doComparison(match_coord+(ivec2(i,j)-c_cur),c_cur);
         }
     }
     // sort the top 1 to the top of the list
