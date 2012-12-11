@@ -288,7 +288,8 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
 
 void prepass(GLuint exemplar, GLuint size, GLuint &matches_x, GLuint &matches_y) {
     // initialize the shaders
-    GLuint prepass = initShaders("minimal.vert", "test.frag");
+    //GLuint prepass = initShaders("minimal.vert", "test.frag");
+    GLuint prepass = initShaders("minimal.vert", "prepass.frag");
     GLint exemplar_loc = glGetUniformLocation(prepass, "exemplar");
     glUseProgram(prepass);
     
