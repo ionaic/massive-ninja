@@ -59,6 +59,7 @@ void main(void) {
     for (int i = shift; i < textureSize(exemplar, 0).y; i++) {
         for (int j = shift; j < textureSize(exemplar, 0).x; j++) {
             cur_vals.xy = vec2(j, i);
+            cur_vals.z = nbhd_dist(ivec2(cur_vals.xy), );
         }
     }
 
