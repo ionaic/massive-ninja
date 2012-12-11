@@ -283,6 +283,10 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
     return p;
 }
 
+GLuint prepass(GLuint exemplar, GLuint size) {
+	GLuint p = initShaders("minimal.vert", "minimal.frag");
+}
+
 int main( void ) {
 	// Initialize GLFW
 	if( !glfwInit() ) {
