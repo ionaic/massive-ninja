@@ -70,31 +70,35 @@ float nbhd_dist(ivec2 a_ij, ivec2 b_ij, int k) {
 }
 
 void main(void) {
-    for (int i = 0; i < 4; i++) {
-        nbhd_set[i] = vec3(99999.0f);
-    }
-    // calculate the shift
-    int shift = int(nbhd * 0.5);
-    ivec2 size = textureSize(exemplar, 0);
-    ivec2 cur_pos = ivec2(size * uv_coord);
+    matches_x = vec4(float(uv_coord.x > 0.5));
+    matches_y = vec4(float(uv_coord.x > 0.5));
+    return;
+    
+    //for (int i = 0; i < 4; i++) {
+    //    nbhd_set[i] = vec3(99999, 99999, 99999 - i);
+    //}
+    //// calculate the shift
+    //int shift = int(nbhd * 0.5);
+    //ivec2 size = textureSize(exemplar, 0);
+    //ivec2 cur_pos = ivec2(size * uv_coord);
 
-    // loop over all of the pixels in the image, only iterate over the middle
-    //  to avoid the edge cases
-    vec3 cur_vals;
-    for (int i = shift; i < size.y - shift; i++) {
-        for (int j = shift; j < size.x - shift; j++) {
-            cur_vals.xy = vec2(j, i);
-            cur_vals.z = nbhd_dist(ivec2(cur_vals.xy), cur_pos, nbhd);
-            keepSmallest(cur_vals);
-        }
-    }
+    //// loop over all of the pixels in the image, only iterate over the middle
+    ////  to avoid the edge cases
+    //vec3 cur_vals;
+    //for (int i = shift; i < size.y - shift; i++) {
+    //    for (int j = shift; j < size.x - shift; j++) {
+    //        cur_vals.xy = vec2(j, i);
+    //        cur_vals.z = nbhd_dist(ivec2(cur_vals.xy), cur_pos, nbhd);
+    //        keepSmallest(cur_vals);
+    //    }
+    //}
 
-    for (int i = 0; i < 4; i++) {
-        matches_x[i] = nbhd_set[i].x;
-        matches_y[i] = nbhd_set[i].y;
-    }
+    //for (int i = 0; i < 4; i++) {
+    //    matches_x[i] = nbhd_set[i].x;
+    //    matches_y[i] = nbhd_set[i].y;
+    //}
 
-    matches_x /= vec4(textureSize(exemplar, 0).x);
-    matches_y /= vec4(textureSize(exemplar, 0).y);
+    //matches_x /= vec4(textureSize(exemplar, 0).x);
+    //matches_y /= vec4(textureSize(exemplar, 0).y);
 }
 
