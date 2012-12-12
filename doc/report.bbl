@@ -1,8 +1,20 @@
 \begin{thebibliography}{1}
 
+\bibitem{ashikhmin}
+Michael Ashikhmin.
+\newblock Synthesizing natural textures.
+\newblock In {\em Proceedings of the 2001 symposium on Interactive 3D
+  graphics}, I3D '01, pages 217--226, New York, NY, USA, 2001. ACM.
+
 \bibitem{paratext}
 Sylvain Lefebvre and Hugues Hoppe.
 \newblock Parallel controllable texture synthesis.
 \newblock {\em ACM Trans. Graph.}, 24(3):777--786, July 2005.
+
+\bibitem{btf}
+Xin Tong, Jingdan Zhang, Ligang Liu, Xi~Wang, Baining Guo, and Heung-Yeung
+  Shum.
+\newblock Synthesis of bidirectional texture functions on arbitrary surfaces.
+\newblock {\em ACM Trans. Graph.}, 21(3):665--672, July 2002.
 
 \end{thebibliography}

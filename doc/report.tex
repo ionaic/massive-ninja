@@ -1,4 +1,4 @@
-\documentclass[10pt, twocolumn]{article}
+\documentclass[12pt, twocolumn]{article}
 
 \usepackage[margin=1in, paperheight=11in, paperwidth=8.5in]{geometry}
 \usepackage{float}
@@ -9,25 +9,42 @@
 \author{Matthew McMullan}
 \date{December 11, 2012}
 
+% ========== REPORT CRITERIA ==========
+%   -describe problem you are addressing
+%   -describe data
+%   -describe implementation
+%   -describe results
+%   -conclude with analysis of strengths/weaknesses of solution
+%   -discuss properties of image data and effects on ability to solve problem
+%   -max 10 pages
+
 \begin{document}
     \maketitle
     \section{Overview}
     % general overview of what the problem is and what we're trying to do
         Our project focused on the creation of large regions of texture from small example textures.  We accomplish this using a method similar to the one described in Parallel Controllable Texture Synthesis, computing our results using a GPU implementation.  The general idea is to scale the image up (without interpolation), apply jitter (randomly shift regions of the texture in the image), and to correct the jittered texture by comparing to neighborhoods of the exemplar.
+        \subsection{Data Sources}
+        %talk about sources of data?
+
     \section{Algorithm}
     % high level discussion of the algorithm and our process as well as the
     %   algorithms described in our papers
-        As described in \cite{paratext}, there are three main steps to our implementation: upsample, jitter, and correction.  Upsampling takes the example texture and creates a larger version, with the resulting texture storing coordinates to values in the exemplar.  This texture of coordinates is then used to upsample further in later iterations.  To achieve the upsampling, first the size of the texture is doubled, and the current pixel first creates an extra row and column to the right and down to accomodate the additional pixels before propagating its stored coordinate values to create a larger region containing the value.  This, when used with multiple passes, results in % upsampling equations?
+        As described in \cite{paratext}, there are three main steps to our implementation: upsample, jitter, and correction.  Upsampling takes the example texture and creates a larger version, with the resulting texture storing coordinates to values in the exemplar.  This texture of coordinates is then used to upsample further in later iterations.  To achieve the upsampling, first the size of the texture is doubled, and the current pixel first creates an extra row and column to the right and down to accomodate the additional pixels before propagating its stored coordinate values to create a larger region containing the value.  This, when used with multiple passes, causes the image to be doubled in size while retaining only the color and intensity data available in the exemplar.% upsampling equations?
 
-        We then apply jitter, using simplex noise.  The generated noise results in a deterministic texture.  This introduces some randomness to reduce the tiled appearence of the texture.
+        We then apply jitter, using simplex noise.  The generated noise results in a deterministic texture.  This introduces some randomness to reduce the tiled appearence of the texture.  Simplex noise is also spatially coherent, resulting in a jittered texture with shifted patches instead of pixel by pixel as would occur with a different algorithm such as a Mersenne twister.
 
-        Before 
+        Before performing the correction step, we perform an additional step to utilize k-coherence to find a variety of neighborhoods to correct to.  For each neighborhood in the synthesized image, we look at each pixel in the neighborhood and find similar neighborhoods in the exemplar by calculating and comparing neighborhood distances as a summed squared Euclidean distance over the neighborhood.  The best $k$ choices are then stored and passed along to the correction step.  For our purposes, we used $k=4$. \cite{ashikhmin, btf}
+
+        To correct, we look at each of the neighborhoods found from $k$-coherence and alters the synthesized neighborhood to match the nearest neighborhood from the exemplar.  
+
     \section{Implementation}
+    % run through algorithm in order and talk about implementation specific stuff
     % lower level implementation details, talk about GLSL passes and shading and such
     % pipeline diagrams
     % simplex noise
     % glsl opengl
-    % subpasses
+    % subpasses, parallelized and everything corrects at once
+    % how everything is stored and passed
     \section{Results}
     % discussion and analysis of good, bad, and average case examples; presentation of results
         \subsection{`Good' Cases}
