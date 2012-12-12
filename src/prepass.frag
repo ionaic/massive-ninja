@@ -22,7 +22,6 @@ void keepSmallest(vec3 new_val) {
     float test_z;
     // store which are the max
     // ivec4 find;
-
     // find the maximum value in the current set
     test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, nbhd_set[3].z)));
     //test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, max(nbhd_set[3].z, new_val.z))));
@@ -97,6 +96,38 @@ void main(void) {
     //    matches_x[i] = nbhd_set[i].x;
     //    matches_y[i] = nbhd_set[i].y;
     //}
+    // loop over all of the pixels in the image, only iterate over the middle
+    //  to avoid the edge cases
+    vec3 cur_vals;
+    for (int i = shift; i < size.y - shift; i++) {
+        for (int j = shift; j < size.x - shift; j++) {
+            cur_vals.xy = vec2(j, i);
+            cur_vals.z = nbhd_dist(ivec2(cur_vals.xy), cur_pos, nbhd);
+            keepSmallest(cur_vals);
+        }
+    }
+    
+    float m = min(min(nbhd_set[1].z,nbhd_set[2].z),min(nbhd_set[3].z,nbhd_set[0].z));
+    if (m == nbhd_set[0].z) {
+        matches_x = vec4(nbhd_set[0].x,nbhd_set[1].x,nbhd_set[2].x,nbhd_set[3].x);
+        matches_y = vec4(nbhd_set[0].y,nbhd_set[1].y,nbhd_set[2].y,nbhd_set[3].y);
+    } else if (m== nbhd_set[1].z) {
+        matches_x = vec4(nbhd_set[1].x,nbhd_set[0].x,nbhd_set[2].x,nbhd_set[3].x);
+        matches_y = vec4(nbhd_set[1].y,nbhd_set[0].y,nbhd_set[2].y,nbhd_set[3].y);
+    } else if (m==nbhd_set[2].z) {
+        matches_x = vec4(nbhd_set[2].x,nbhd_set[1].x,nbhd_set[0].x,nbhd_set[3].x);
+        matches_y = vec4(nbhd_set[2].y,nbhd_set[1].y,nbhd_set[0].y,nbhd_set[3].y);
+    } else if (m==nbhd_set[3].z) {
+        matches_x = vec4(nbhd_set[3].x,nbhd_set[1].x,nbhd_set[0].x,nbhd_set[2].x);
+        matches_y = vec4(nbhd_set[3].y,nbhd_set[1].y,nbhd_set[0].y,nbhd_set[2].y);
+    }
+    matches_x /= vec4(textureSize(exemplar, 0).x);
+    matches_y /= vec4(textureSize(exemplar, 0).y);
+    return;
+    for (int i = 0; i < 4; i++) {
+        matches_x[i] = nbhd_set[i].x;
+        matches_y[i] = nbhd_set[i].y;
+    }
 
     //matches_x /= vec4(textureSize(exemplar, 0).x);
     //matches_y /= vec4(textureSize(exemplar, 0).y);

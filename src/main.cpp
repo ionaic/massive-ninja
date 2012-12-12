@@ -170,7 +170,7 @@ GLuint createFBO(GLuint texture, GLuint texture2) {
     return FBO;
 }
 
-GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GLuint pyramid_z[], GLuint exemplar) {
+GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GLuint pyramid_z[], GLuint exemplar, GLint matches_x, GLint matches_y) {
     // init shaders (minimal, correction, kcohere, all with minimal.vert as vert shader)
 	GLuint p = initShaders("minimal.vert", "minimal.frag");
 	GLuint r = initShaders("minimal.vert", "correction.frag");
@@ -237,6 +237,10 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
         // shader pass 2	
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,pyramid_z[i]);
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D,matches_x);
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D,matches_y);
         //FBO = createFBO(ttex2,ttex3);
         FBO = createFBO(pyramid_x[i], pyramid_y[i]);
         glUseProgram(k);
@@ -376,7 +380,7 @@ int main( void ) {
     GLuint matches_x, matches_y;
     prepass(example, 64, matches_x, matches_y);
 
-    runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example);
+    runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, matches_x, matches_y);
     glUseProgram(q);
     int running = GL_TRUE;
 	int hasrun= GL_TRUE;
@@ -392,6 +396,18 @@ int main( void ) {
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, example);
+    
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, matches_x);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, matches_y);
+    
+    GLint u_matches_x = glGetUniformLocation(q,"matches_x");
+    GLint u_matches_y = glGetUniformLocation(q,"matches_y");
+
+    glUniform1i(u_matches_x, 4);
+    glUniform1i(u_matches_y, 5);
+
     glUniform1i(mode, 0);
     int set = 0;
     while( running ) {
@@ -399,7 +415,7 @@ int main( void ) {
             firstrun = GL_FALSE;
             if (hasrun == GL_FALSE) {
                 hasrun = GL_TRUE;
-                runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example);
+                runAlgorithm(pyramid, pyramid_x, pyramid_y, pyramid_u, example, matches_x, matches_y);
 				glViewport(0,0,512,512);
             }
         } else {
@@ -443,12 +459,12 @@ int main( void ) {
             set=3;
         }
 		if (glfwGetKey(GLFW_KEY_F9)) {
-			glUniform1i(mode, 2);
+			glUniform1i(mode, 3);
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, matches_x);
+            glBindTexture(GL_TEXTURE_2D, example);
 		}
 		if (glfwGetKey(GLFW_KEY_F10)) {
-			glUniform1i(mode, 2);
+			glUniform1i(mode, 3);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, matches_y);
 		}
