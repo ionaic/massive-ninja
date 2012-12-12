@@ -17,17 +17,17 @@ vec3 nbhd_set[4];
 // keep only the smallest 4 out of the 4 current smallest and the new value
 void keepSmallest(vec3 new_val) {
     // store the current max value's index
-    int test_ind;
+    //int test_ind;
     // store the current max distance
     float test_z;
     // store which are the max
     // ivec4 find;
     // find the maximum value in the current set
-    test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, nbhd_set[3].z)));
-    //test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, max(nbhd_set[3].z, new_val.z))));
+    //test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, nbhd_set[3].z)));
+    test_z = max(nbhd_set[0].z, max(nbhd_set[1].z, max(nbhd_set[2].z, max(nbhd_set[3].z, new_val.z))));
     //find = ivec4(test_z == nbhd_set[0].z, test_z == nbhd_set[1].z, test_z == nbhd_set[2].z, test_z == nbhd_set[3].z);// *  ivec4(0 == nbhd_set[0].z, 0 == nbhd_set[1].z, 0 == nbhd_set[2].z, 0 == nbhd_set[3].z);
     
-    test_ind = 1 * int(test_z == nbhd_set[1].z) + 2 * int(test_z == nbhd_set[2].z) + 3 * int(test_z == nbhd_set[3].z); 
+    //test_ind = 1 * int(test_z == nbhd_set[1].z) + 2 * int(test_z == nbhd_set[2].z) + 3 * int(test_z == nbhd_set[3].z); 
 
     if (test_z == nbhd_set[0].z) {
         nbhd_set[0] = new_val;
@@ -87,20 +87,48 @@ void main(void) {
             keepSmallest(cur_vals);
         }
     }
-    
+   
+    if (cur_pos.x - shift < 0 || cur_pos.y - shift < 0 || cur_pos.x + shift >= size.x || cur_pos.y + shift >= size.y) {
+        matches_x = vec4(uv_coord.x);
+        matches_y = vec4(uv_coord.y);
+        return;
+    }
+     
     float m = min(min(nbhd_set[1].z,nbhd_set[2].z),min(nbhd_set[3].z,nbhd_set[0].z));
+    vec4 dist;
     if (m == nbhd_set[0].z) {
         matches_x = vec4(nbhd_set[0].x,nbhd_set[1].x,nbhd_set[2].x,nbhd_set[3].x);
         matches_y = vec4(nbhd_set[0].y,nbhd_set[1].y,nbhd_set[2].y,nbhd_set[3].y);
+        dist =      vec4(nbhd_set[0].z,nbhd_set[1].z,nbhd_set[2].z,nbhd_set[3].z);
     } else if (m== nbhd_set[1].z) {
         matches_x = vec4(nbhd_set[1].x,nbhd_set[0].x,nbhd_set[2].x,nbhd_set[3].x);
         matches_y = vec4(nbhd_set[1].y,nbhd_set[0].y,nbhd_set[2].y,nbhd_set[3].y);
+        dist =      vec4(nbhd_set[1].z,nbhd_set[0].z,nbhd_set[2].z,nbhd_set[3].z);
     } else if (m==nbhd_set[2].z) {
         matches_x = vec4(nbhd_set[2].x,nbhd_set[1].x,nbhd_set[0].x,nbhd_set[3].x);
         matches_y = vec4(nbhd_set[2].y,nbhd_set[1].y,nbhd_set[0].y,nbhd_set[3].y);
+        dist =      vec4(nbhd_set[2].z,nbhd_set[1].z,nbhd_set[0].z,nbhd_set[3].z);
     } else if (m==nbhd_set[3].z) {
         matches_x = vec4(nbhd_set[3].x,nbhd_set[1].x,nbhd_set[0].x,nbhd_set[2].x);
         matches_y = vec4(nbhd_set[3].y,nbhd_set[1].y,nbhd_set[0].y,nbhd_set[2].y);
+        dist =      vec4(nbhd_set[3].z,nbhd_set[1].z,nbhd_set[0].z,nbhd_set[2].z);
+    }
+    m = min(dist.y,min(dist.z,dist.w));
+    if (m == dist.z) {
+        matches_x = matches_x.xzyw;
+        matches_y = matches_y.xzyw;
+        dist = dist.xzyw;
+    }
+    if (m == dist.w) {
+        matches_x = matches_x.xwyz;
+        matches_y = matches_y.xwyz;
+        dist = dist.xwyz;
+    }
+    m = min(dist.z,dist.w);
+    if (m == dist.w) {
+        matches_x = matches_x.xywz;
+        matches_y = matches_y.xywz;
+        dist = dist.xywz;
     }
     matches_x /= vec4(textureSize(exemplar, 0).x);
     matches_y /= vec4(textureSize(exemplar, 0).y);

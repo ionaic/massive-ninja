@@ -81,19 +81,54 @@ float snoise(vec2 v) {
   return 130.0 * dot(m, g);
 }
 // *****************************************************************************
- 
+#define padding 2 
 void main(void) {
-	// upsampling
+    int newm = int(m) - padding*2;
+    vec2 tindex = texture(tex,uv_coord.xy).xy*vec2(m,m);
+    ivec2 index = ivec2(round(tindex.x),round(tindex.y));
+    index -= ivec2(padding);
+    index += index;
+    ivec2 pos = ivec2(uv_coord * vec2(textureSize(tex,0))* vec2(2,2));
+    index += ivec2(pos.x&1,pos.y&1);
+    index = ivec2(mod(index,newm));
+    /*if (index.x < 0) {
+        index.x += newm;
+    } else if (index.x >= newm) {
+        index.x -= newm;
+    }
+    if (index.y < 0) {
+        index.y += newm;
+    } else if (index.y >= newm) {
+        index.y -= newm;
+    }*/
+    index += ivec2(padding);
+    vec2 inc = vec2(index) / vec2(m,m);
+    colorOut = vec4(inc,0,0);
+    return;
+    /*
+    // upsampling
+    vec2 relval = texture(tex,uv_coord).xy;
+    //if (relval.r < (2./64.)) {
+    //    relval = vec2(2./64.);
+    //}
+    relval -= vec2(float(padding)/float(m));
+    relval *= vec2(float(m)/float(m-uint(padding)));
+    uint newm = uint(2*padding);
     float mstep = 1./float(m);
 	ivec2 p = ivec2(gl_FragCoord.xy);
 	ivec2 p0 = p/2;
     vec2 inc = vec2(p.x&1,p.y&1)/vec2(m,m);
-	inc = 2*texture(tex,uv_coord).xy+inc;
+	inc = 2*relval+inc;
     //inc *= vec2(20, 20);
 	inc = mod(inc,1);
+
+    inc *= vec2(float(m-uint(padding))/float(m));
+    inc += vec2(float(padding)/float(m));
+    inc = clamp(inc,vec2(0),vec2(1));
     colorOut = vec4(inc,0,0);
     return;
-	// jitter
+	*/
+    // jitter
     float r = 0.0;
 	vec2 n = vec2(snoise(gl_FragCoord.xy), snoise(600*vec2(1.,1.)/gl_FragCoord.xy));
     n = mod(n, 1);

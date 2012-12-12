@@ -122,8 +122,11 @@ GLuint createBlankTex(GLuint size) {
     glBindTexture( GL_TEXTURE_2D, texture );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ); 
-    void* data = calloc(size*size,3 * sizeof(GLushort));
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB16,size,size,0,GL_RGB,GL_UNSIGNED_SHORT,data);
+    GLushort* data = (GLushort*)calloc(size*size,4 * sizeof(GLushort));
+    if (size==1) {
+        data[0] = data[1] = 8;
+    }
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16,size,size,0,GL_RGB,GL_UNSIGNED_SHORT,data);
     free(data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -187,8 +190,8 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
     GLint k_tex = glGetUniformLocation(k,"res");
     GLint k_exemplar = glGetUniformLocation(k,"example_texture");
 	GLint k_matches_x = glGetUniformLocation(k,"matches_x");
-    GLint k_matches_y = glGetUniformLocation(k,"matches_x");
-	
+    GLint k_matches_y = glGetUniformLocation(k,"matches_y");
+    cout << "matches: " << k_matches_x << "\t" << k_matches_y << endl;	
     checkGlError(8);
 	GLint tex = glGetUniformLocation(p, "tex");
 	glUseProgram(p);
@@ -235,8 +238,9 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
             continue;
         }
         // shader pass 2	
+        for (int j=0; j<5; ++j) {
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,pyramid_z[i]);
+        glBindTexture(GL_TEXTURE_2D,(j==0?pyramid_z[i]:pyramid[i]));
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D,matches_x);
         glActiveTexture(GL_TEXTURE5);
@@ -284,6 +288,7 @@ GLuint runAlgorithm(GLuint pyramid[], GLuint pyramid_x[], GLuint pyramid_y[], GL
         glDeleteFramebuffers(1,&FBO);
 		checkGlError(2);
         glPopAttrib();
+        }
     }
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);
@@ -459,14 +464,19 @@ int main( void ) {
             set=3;
         }
 		if (glfwGetKey(GLFW_KEY_F9)) {
+			glUniform1i(mode, 2);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, matches_x);
+		}
+		if (glfwGetKey(GLFW_KEY_F10)) {
+			glUniform1i(mode, 2);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, matches_y);
+		}
+		if (glfwGetKey(GLFW_KEY_F11)) {
 			glUniform1i(mode, 3);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, example);
-		}
-		if (glfwGetKey(GLFW_KEY_F10)) {
-			glUniform1i(mode, 3);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, matches_y);
 		}
         // OpenGL rendering goes here...
 		glClear( GL_COLOR_BUFFER_BIT );

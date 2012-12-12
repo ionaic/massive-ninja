@@ -19,7 +19,7 @@ void main(void) {
 	else if (mode==1)
 		out_Color = texture(exemplar,texture(tex,uv_coord).xy);
 	else if (mode==2)
-		out_Color = texture(exemplar,uv_coord);
+		out_Color = vec4(texture(exemplar,uv_coord).w);
     else
         //out_Color = vec4(texture(matches_x,uv_coord).x,texture(matches_y,uv_coord).x,0,0);
         out_Color = texture(exemplar,vec2(texture(matches_x,uv_coord).x,texture(matches_y,uv_coord).x));
